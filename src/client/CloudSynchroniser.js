@@ -21,7 +21,7 @@ var // Prototype inheritance
     MessageIdGenerator = require("MessageIdGenerator"),
 
     // Creates protocol messages to be sent to the sync service
-    MessageFactory = require("MessageFactory"),
+    MessageFactory = require("Message"),
 
     // Synchronises the local copy of the wallclock to wallclock service
     WallclockSynchroniser = require("WallClockSynchroniser"),
