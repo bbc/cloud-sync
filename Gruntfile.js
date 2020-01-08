@@ -15,13 +15,14 @@ var path = require("path"),
 libRoot.push(path.resolve("src/client"));
 libRoot.push(path.resolve("src/common"));
 libRoot.push(path.resolve("src/common/message"));
-libRoot.push(path.resolve("src/common/message/impl"));
+// libRoot.push(path.resolve("src/common/message/impl"));
 libRoot.push(path.resolve("src/common/messenger"));
 // libRoot.push(path.resolve("src/common/messenger/messagingadapter"));
 libRoot.push(path.resolve("src/common/topicparser"));
 libRoot.push(path.resolve("src/common/util"));
 libRoot.push(path.resolve("src/common/timeline"));
 libRoot.push(path.resolve("src"));
+libRoot.push(path.resolve("node_modules"));
 
 // Paths to source files for test builds
 testRoot.push(path.resolve("tests/specs"));
@@ -38,9 +39,8 @@ module.exports = function(grunt) {
       tests: "build/tests",
       tmp: "build/tmp"
     },
-
     webpack: {
-
+      mode: "development",
       lib_browser: {
         entry: './src/client/CloudSyncKit.js',
         output: {
@@ -51,14 +51,26 @@ module.exports = function(grunt) {
           libraryTarget: 'commonjs2'
         },
         module: {
-          loaders: []
+          rules: [
+            {
+              test: /\.m?js$/,
+              exclude: /(node_modules|bower_components)/,
+              use: {
+                loader: 'babel-loader',
+                options: {
+                  presets: ['@babel/preset-env']
+                }
+              }
+            }
+          ]
         },
         resolve: {
-          root: libRoot
+          modules: libRoot
         }
       },
 
       lib_browser2: {
+        mode: "development",
         entry: './src/client/CloudSynchroniser.js',
         output: {
           path: path.resolve("dist/browser"),
@@ -72,15 +84,16 @@ module.exports = function(grunt) {
           "dvbcss-protocols": true,
         },
         module: {
-          loaders: []
+          rules: []
         },
         resolve: {
-          root: libRoot
+          modules: libRoot
         }
       },
 
-      messageFactoryNode: {
-        entry: './src/common/message/MessageFactory.js',
+      messageNode: {
+        mode: "development",
+        entry: './src/common/message/Message.js',
         output: {
           path: path.resolve("./build/lib"),
           filename: "MessageFactory.js",
@@ -89,10 +102,21 @@ module.exports = function(grunt) {
           libraryTarget: 'commonjs2'
         },
         module: {
-          loaders: []
+          rules: [
+            {
+              test: /\.m?js$/,
+              exclude: /(node_modules|bower_components)/,
+              use: {
+                loader: 'babel-loader',
+                options: {
+                  presets: ['@babel/preset-env']
+                }
+              }
+            }
+          ]
         },
         resolve: {
-          root: libRoot
+          modules: libRoot
         }
       },
 
@@ -106,44 +130,21 @@ module.exports = function(grunt) {
           libraryTarget: 'commonjs2'
         },
         module: {
-          loaders: []
+          rules: [
+            {
+              test: /\.m?js$/,
+              exclude: /(node_modules|bower_components)/,
+              use: {
+                loader: 'babel-loader',
+                options: {
+                  presets: ['@babel/preset-env']
+                }
+              }
+            }
+          ]
         },
         resolve: {
-          root: libRoot
-        }
-      },
-
-      lib_browserES3: {
-        entry: './src/main_browser.es3.js',
-        output: {
-          path: path.resolve("dist/tmp/browser"),
-          filename: "[name].es3.js",
-          chunkFilename: "chunk-[name]-[chunkhash].js",
-          library: 'cloudSync',
-          libraryTarget: 'var'
-        },
-        module: {
-          loaders: []
-        },
-        resolve: {
-          root: libRoot
-        }
-      },
-
-      lib_node: {
-        entry: './src/main_node.js',
-        output: {
-          path: path.resolve("dist/node"),
-          filename: "[name].js",
-          chunkFilename: "chunk-[name]-[chunkhash].js",
-          library: 'cloudSync',
-          libraryTarget: 'var'
-        },
-        module: {
-          loaders: []
-        },
-        resolve: {
-          root: libRoot
+          modules: libRoot
         }
       },
 
@@ -155,10 +156,10 @@ module.exports = function(grunt) {
           chunkFilename: "chunk-[name]-[chunkhash].js"
         },
         module: {
-          loaders: []
+          rules: []
         },
         resolve: {
-          root: testRoot
+          modules: testRoot
         }
       }
     },
@@ -214,7 +215,6 @@ module.exports = function(grunt) {
         msg: {
             src: [
               "src/common/message/readme.md",
-              "src/common/message/impl/*.js",
               "src/common/message/*.js",
               "src/common/messenger/**/*.js"
             ],
@@ -262,23 +262,7 @@ module.exports = function(grunt) {
         }
     },
 
-    // Typescript: JavaScript transpiler
-    // (https://www.npmjs.com/package/grunt-ts)
-    ts: {
-        // Transile browser libs to ES3 (for legacy HbbTV devices)
-        hbbtv1: {
-            src: ['dist/tmp/browser/main.es3.js'],
-            dest: 'dist/browser/main.es3.js',
-            options: {
-                module: 'system', //or commonjs
-                target: 'es3',
-                allowJs: true,
-                removeComments: true
-            }
-        }
-    }
-    // TODO Transpile test builds and run tests with transpiled code
-
+    
   });
 
 
@@ -287,7 +271,6 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-jsdoc');
-  grunt.loadNpmTasks('grunt-ts');
   grunt.loadNpmTasks('grunt-md');
   grunt.loadNpmTasks('grunt-plantuml');
 
@@ -296,7 +279,7 @@ module.exports = function(grunt) {
   grunt.registerTask('test', ['build_tests', 'watch:tests']);
 
   grunt.registerTask('build_tests', ['build_lib', 'clean:tests', 'webpack:specs', 'jasmine:tests']);
-  grunt.registerTask('build_lib', ['clean:dist', 'clean:build', 'webpack:messageFactoryNode', "webpack:messengerNode", 'webpack:lib_browser', 'webpack:lib_browser2', 'webpack:lib_browserES3', 'webpack:lib_node', "ts", "clean:tmp" ]);
+  grunt.registerTask('build_lib', ['clean:dist', 'clean:build', 'webpack:messageNode', "webpack:messengerNode", 'webpack:lib_browser', 'webpack:lib_browser2', "clean:tmp" ]);
   grunt.registerTask("doc", [ "jsdoc", "md", "plantuml" ]);
 
 };
