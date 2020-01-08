@@ -4,7 +4,7 @@ var Messenger, MessageDispatcher, MessageFactory, MaxRequestRetryExceedError,
 WeakMap = require("weak-map");
 events = require("events");
 inherits = require("inherits");
-MessageFactory = require("MessageFactory");
+Messages = require("../message/Message");
 MessageDispatcher = require("./messagedispatcher/MessageDispatcher");
 
 PRIVATE = new WeakMap();
@@ -118,17 +118,22 @@ inherits(Messenger, events);
 
 function handleMessage (message) {
 
-    message = MessageFactory.deserialise(message);
+    message = Messages.Message.deserialise(message);
+
+    // console.log("In handleMessage: deserialised message = " + JSON.stringify(message));
     
     if (PRIVATE.get(this).dispatcher.call(message)) {
         // Passed message to response handler; no further action required
+        // console.log("In handleMessage: deserialised message passed to response handler.");
     }
 
-    else if (message.hasOwnProperty("responseChannel")) {
+    else if (message.hasOwnProperty("responseChannel") && (message.responseChannel!=="")) {
+        // console.log("In handleMessage: request event emitted.");
         this.emit("request", message);
     }
     
     else {
+        // console.log("In handleMessage: message event emitted.");
         this.emit("message", message);
     }
 }

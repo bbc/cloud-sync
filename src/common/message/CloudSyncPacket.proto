@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package CloudSyncMessages;
+
+enum MessageType {
+    JOIN_REQ                    = 0;
+    JOIN_RESP                   = 1;
+    DEVICE_REQ                  = 2;
+    DEVICE_RESP                 = 3;
+    LEAVE_REQ                   = 4;
+    LEAVE_RESP                  = 5;
+    TIMELINE_REG_REQ            = 6;
+    TIMELINE_REG_RESP           = 7;
+    TIMELINE_DEREG_REQ          = 8;
+    TIMELINE_DEREG_RESP         = 9;
+    TIMELINE_REQ                = 10;
+    TIMELINE_QUERY              = 11;
+    TIMELINE_RESP               = 12;
+    TIMELINE_SUB_REQ            = 13;
+    TIMELINE_SUB_RESP           = 14;
+    TIMELINE_UPDATE_REQ         = 15;
+    TIMELINE_UPDATE_RESP        = 16;
+    STOP_TIMELINE_UPDATE_REQ    = 17;
+    TIMELINE_UPDATE             = 18;
+    CONTENT_ID_CHANGE           = 19;
+    DEVICE_STATUS               = 20;
+    UNEXPECTED_DEVICE_EXIT      = 21;
+    SYNC_TIMELINES_AVAIL        = 22; 
+    
+}
+
+message Packet {
+    Header header               = 1;
+    bytes payload               = 2;
+}
+
+
+message Header {
+    MessageType msgType         = 1;
+    string sessionID            = 2;
+    string messageID            = 3;
+    string version              = 4;
+    string senderID             = 5;
+    string responseChannel      = 6;
+    int32 responseCode          = 7;
+}
+
+
+

@@ -5,7 +5,8 @@ mqtt = require("mqtt");
 WeakMap = require("weak-map");
 MessagingAdapter = require("./MessagingAdapter");
 inherits = require("inherits");
-UnexpectedDeviceExit = require("../../message/impl/UnexpectedDeviceExit");
+MessageFactory = require("../../message/Message");
+
 
 PRIVATE = new WeakMap();
 
@@ -51,7 +52,7 @@ MqttMessagingAdapter = function (host, port, user, options) {
 
     lastWill = {};
     lastWill.topic = "Sessions/lastwill";
-    lastWill.payload = new UnexpectedDeviceExit(sessionId, contextId, user).serialise();
+    lastWill.payload = new MessageFactory.UnexpectedDeviceExit(sessionId, user).serialise();
     lastWill.qos = 2;
     lastWill.retain = false;
 

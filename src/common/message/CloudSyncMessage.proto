@@ -1,0 +1,158 @@
+syntax = "proto3";
+
+package CloudSyncMessages;
+
+// Sub messages
+message TimelineInfo {
+    string timelineID = 1;
+    string timelineType = 2;
+    uint32 frequency = 3;
+    string contentID = 4;
+    string providerID = 5;
+    string providerType = 6;
+    string channel = 7;
+    bool useForSessionSync = 8;
+    bool isAvailable = 9;
+}
+
+message Correlation {
+    double childTime = 1;
+    double parentTime = 2;
+    double initialError = 3;
+    double errorGrowthRate = 4;
+}
+
+message Timestamp {
+    double contentTime = 1;
+    double wallclockTime = 2;
+    double speed = 3;
+}
+
+message PresentationTimestamp {
+    Timestamp earliest = 1;
+    Timestamp actual = 2;
+    Timestamp latest = 3;
+}
+
+// Additional fields required for certain messages, beyond those included in the cloud sync message header
+
+message JoinREQ{
+    string requestChannel = 1;
+    uint32 syncTLStrategy = 2;
+}
+
+message JoinRESP {
+    string wallclockURL = 1;
+}
+
+// message DeviceREQ
+
+message DeviceRESP {
+    repeated string devices = 1;
+}
+
+// message LeaveREQ
+
+// message LeaveRESP
+
+message TimelineRegistrationREQ {
+    string timelineID = 1;
+    string contentID = 2;
+    string timelineType = 3;
+    string channel = 4;
+    uint64 frequency = 5;
+    Correlation correlation = 6;
+    bool useForSessionSync = 7;
+}
+
+message TimelineRegistrationRESP {
+    string timelineUpdateChannel = 1;
+}
+
+message TimelineDeregistrationREQ {
+    string timelineID = 1;
+}
+
+// message TimelineDeregistrationRESP
+
+message TimelineREQ {
+    bool syncTimeline = 1;
+}
+
+message TimelineQuery {
+    string providerId = 1;
+    string contentID = 2;
+    string timelineType = 3;
+    bool syncTimeline = 4;
+}
+
+message TimelineRESP {
+    repeated TimelineInfo timelineInfo = 1;
+}
+
+message TimelineSubscriptionREQ {
+    string timelineID = 1;
+}
+
+message TimelineSubscriptionRESP {
+    string providerChannel = 1;
+    PresentationTimestamp presentationTimestamp = 2;
+}
+
+message TimelineUpdateREQ {
+    string timelineID = 1;
+    string timelineType = 2;
+    string contentID = 3;
+}
+
+message TimelineUpdateRESP
+{
+    string timelineID = 1;
+}
+
+message StopTimelineUpdateREQ {
+    string timelineID = 1;
+    string timelineType = 2;
+    string contentID = 3;
+}
+
+message TimelineUpdate {
+    string timelineID = 1;
+    string timelineType = 2;
+    string contentID = 3;
+    PresentationTimestamp presentationTimestamp = 4;
+}
+
+message ContentIDChange {
+    string contentID = 1;
+}
+
+message DeviceStatus{
+    string device = 1;
+    string status = 2;
+}
+
+// message UnexpectedDeviceExit
+
+message SyncTimelinesAvailable {
+    repeated TimelineInfo timelineInfo = 1;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
