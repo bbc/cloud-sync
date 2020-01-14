@@ -14,7 +14,7 @@ var path = require("path"),
 // Paths to source files for library builds
 libRoot.push(path.resolve("../common"));
 libRoot.push(path.resolve("../common/message"));
-libRoot.push(path.resolve("../common/message/impl"));
+// libRoot.push(path.resolve("../common/message/impl"));
 libRoot.push(path.resolve("../common/messenger"));
 libRoot.push(path.resolve("../common/topicparser"));
 libRoot.push(path.resolve("../common/util"));
@@ -22,11 +22,7 @@ libRoot.push(path.resolve("../common/timeline"));
 libRoot.push(path.resolve("../common/datastore"));
 libRoot.push(path.resolve("../common/state"));
 libRoot.push(path.resolve("../synccontroller"));
-
-// Paths to source files for test builds
-testRoot.push(path.resolve("tests/specs"));
-testRoot.push(path.resolve("tests/mocks"));
-testRoot = testRoot.concat(libRoot);
+libRoot.push(path.resolve("node_modules"));
 
 module.exports = function(grunt) {
 
@@ -35,13 +31,13 @@ module.exports = function(grunt) {
 		clean: {
 			dist: "dist",
 			build: "build",
-			tests: "build/tests",
 			tmp: "build/tmp"
 		},
 
 		webpack: {
 			messageFactoryNode: {
-				entry: "../common/message/MessageFactory.js",
+				mode: "development",
+				entry: "../common/message/Message.js",
 				output: {
 					path: path.resolve("./build/lib"),
 					filename: "MessageFactory.js",
@@ -50,14 +46,15 @@ module.exports = function(grunt) {
 					libraryTarget: "commonjs2"
 				},
 				module: {
-					loaders: []
+					rules: []
 				},
 				resolve: {
-					root: libRoot
+					modules: libRoot
 				}
 			},
 
 			messengerNode: {
+				mode: "development",
 				entry: "../common/messenger/Messenger.js",
 				output: {
 					path: path.resolve("./build/lib"),
@@ -67,39 +64,14 @@ module.exports = function(grunt) {
 					libraryTarget: "commonjs2"
 				},
 				module: {
-					loaders: []
+					rules: []
 				},
 				resolve: {
-					root: libRoot
+					modules: libRoot
 				}
 			},
 
-			specs: {
-				entry: "./tests/main.js",
-				output: {
-					path: path.resolve("build/tests/"),
-					filename: "specs.js",
-					chunkFilename: "chunk-[name]-[chunkhash].js"
-				},
-				module: {
-					loaders: []
-				},
-				resolve: {
-					root: testRoot
-				}
-			}
-		},
-
-		jasmine: {
-			tests: {
-				src: [],  // not needed because each test uses require() to load what it is testing
-				options: {
-					specs: "build/tests/specs.js",
-					outfile: "build/tests/_specRunner.html",
-					summary: true,
-					keepRunner: true
-				}
-			}
+			
 		},
 
 		watch: {
@@ -121,30 +93,18 @@ module.exports = function(grunt) {
 					event: "all"
 				}
 			},
-			tests: {
-				files: ["src/**/*.js", "tests/**/*.test.js", "Gruntfile.js"],
-				tasks: ["build_tests"],
-				options: {
-					interrupt: true,
-					event: "all"
-				}
-			},
 		}
 
 	});
 
 
 	grunt.loadNpmTasks("grunt-webpack");
-	grunt.loadNpmTasks("grunt-contrib-jasmine");
 	grunt.loadNpmTasks("grunt-contrib-clean");
 	grunt.loadNpmTasks("grunt-contrib-watch");
 
 
 	// default do nothing
 	grunt.registerTask("default", ["build_lib", "watch:scripts"]);
-	grunt.registerTask("test", ["build_tests", "watch:tests"]);
-
-	grunt.registerTask("build_tests", ["build_lib", "clean:tests", "webpack:specs", "jasmine:tests"]);
 	grunt.registerTask("build_lib", ["clean:build", "webpack:messageFactoryNode", "webpack:messengerNode", "clean:tmp" ]);
 
 
