@@ -99,7 +99,6 @@ module.exports = function(grunt) {
 
 
 	grunt.loadNpmTasks("grunt-webpack");
-	grunt.loadNpmTasks("grunt-contrib-jasmine");
 	grunt.loadNpmTasks("grunt-contrib-clean");
 	grunt.loadNpmTasks("grunt-contrib-watch");
 
