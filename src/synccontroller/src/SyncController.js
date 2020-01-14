@@ -20,7 +20,7 @@
 //  Declarations
 // ---------------------------------------------------------
 var MessageIdGenerator = require("../../common/message/MessageIdGenerator");
-var MessageFactory = require("../build/lib/MessageFactory");
+var MessageFactory = require("..//build/lib/MessageFactory");
 var Messenger = require("../build/lib/Messenger");
 var MessagingAdapter = require("../../common/messenger/messagingadapter/MqttMessagingAdapter");
 var PresentationTimestamp = require("../../common/state/PresentationTimestamp");
@@ -728,17 +728,25 @@ function sendTimelineUpdate(timeline) {
 	logger.debug("sendTimelineUpdate: publishing this timestamp in synctimeline channel:", JSON.stringify(timeObject));
 	// console.log(timeObject);
 
-	message = MessageFactory.create(
-		"TimelineUpdate",
-		timeline.sessionId,
-		timeline.providerId,
-		timeline.id,
-		timeline.timelineType,
-		timeline.contentId,
-		new PresentationTimestamp(timeObject),
-		null,
-		"0.0.1"
-	);
+	message = new MessageFactory.TimelineUpdate(timeline.sessionId, 
+												timeline.providerId,
+												timeline.id,
+												timeline.timelineType,
+												timeline.contentId,
+												new PresentationTimestamp(timeObject)
+												);
+
+	// message = MessageFactory.create(
+	// 	"TimelineUpdate",
+	// 	timeline.sessionId,
+	// 	timeline.providerId,
+	// 	timeline.id,
+	// 	timeline.timelineType,
+	// 	timeline.contentId,
+	// 	new PresentationTimestamp(timeObject),
+	// 	null,
+	// 	"0.0.1"
+	// );
 	//  { qos: 0, retain: true }
 	priv.messenger.send(message, timeline.channel, { qos: 0, retain: true });
 	logger.debug("sendTimelineUpdate: sent  message to channel %s", timeline.channel);
@@ -767,21 +775,16 @@ function sendSyncTimelinesAvailable(session)
 		}).then((timelines)=>{
 
 			// console.log(timelines);
-			var timelinesInfo = [];	
+			var timelineInfoList = [];	
 	
 			for (let t of timelines) {
 				if (t instanceof Timeline){
 					var ti = t.getInfo();
-					timelinesInfo.push(ti);			
+					timelineInfoList.push(ti);			
 				}				
-			}	
-			message = MessageFactory.create(
-				"SyncTimelinesAvailable",
-				session.id,
-				timelinesInfo,
-				null,
-				"0.0.1"
-			);
+			}
+			
+			message = new MessageFactory.SyncTimelinesAvailable(session.id, timelineInfoList);
 		
 			priv.messenger.send(message, session.channel);
 			logger.debug("sendSyncTimelinesAvailable: sent  message to topic: ", session.channel);
@@ -793,60 +796,5 @@ function sendSyncTimelinesAvailable(session)
 
 
 // ---------------------------------------------------------
-
-// --------------------------------------------------
-
-/**
- * Build and send a request message to a target channel
- * @param {string} type 
- * @param {*} sessionId 
- * @param {*} contextId 
- * @param {*} senderId 
- * @param {*} replyChannel 
- * @param {*} destinationChannel 
- * @param {*} onresponse 
- * @param {*} options 
- */
-function sendRequest (type, sessionId, contextId, senderId, replyChannel, destinationChannel, onresponse, options) {
-    
-	var args, priv, i, j, request;
-
-	priv = PRIVATE.get(this);
-
-
-	args = [];
-	args[0] = type;
-	args[1] = sessionId;
-	args[2] = contextId;
-	args[3] = senderId;
-	args[4] = replyChannel;
-
-	i = 4;
-	j=8;
-
-	// Add optional arguments
-	if (arguments.length > 7) {
-		for (; j < arguments.length; j++, i++) {
-			args[i+1] = arguments[j];
-		}
-	}
-
-	args[i+1] = MessageIdGenerator.getNewId();
-	args[i+2] = "0.0.1";
-	// console.log(args);
-	request = MessageFactory.create.apply(null, args);
-	priv.messenger.sendRequest(request, destinationChannel, onresponse, options);
-
-	return request;
-}
-
-
-// ---------------------------------------------------------
-// Utility methods
-// ---------------------------------------------------------
-
-
-
-
 SyncController.queueName =kSyncControllerQueueKey;
 module.exports = SyncController;
