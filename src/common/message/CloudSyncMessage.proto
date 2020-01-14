@@ -13,6 +13,9 @@ message TimelineInfo {
     string channel = 7;
     bool useForSessionSync = 8;
     bool isAvailable = 9;
+    string parentTimelineId = 10;
+    Correlation parentCorrelation = 11;
+    Timestamp lastTimestamp = 12;
 }
 
 message Correlation {

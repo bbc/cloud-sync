@@ -536,7 +536,10 @@ proto.CloudSyncMessages.TimelineInfo.toObject = function(includeInstance, msg) {
     providertype: jspb.Message.getFieldWithDefault(msg, 6, ""),
     channel: jspb.Message.getFieldWithDefault(msg, 7, ""),
     useforsessionsync: jspb.Message.getBooleanFieldWithDefault(msg, 8, false),
-    isavailable: jspb.Message.getBooleanFieldWithDefault(msg, 9, false)
+    isavailable: jspb.Message.getBooleanFieldWithDefault(msg, 9, false),
+    parenttimelineid: jspb.Message.getFieldWithDefault(msg, 10, ""),
+    parentcorrelation: (f = msg.getParentcorrelation()) && proto.CloudSyncMessages.Correlation.toObject(includeInstance, f),
+    lasttimestamp: (f = msg.getLasttimestamp()) && proto.CloudSyncMessages.Timestamp.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -608,6 +611,20 @@ proto.CloudSyncMessages.TimelineInfo.deserializeBinaryFromReader = function(msg,
     case 9:
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setIsavailable(value);
+      break;
+    case 10:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setParenttimelineid(value);
+      break;
+    case 11:
+      var value = new proto.CloudSyncMessages.Correlation;
+      reader.readMessage(value,proto.CloudSyncMessages.Correlation.deserializeBinaryFromReader);
+      msg.setParentcorrelation(value);
+      break;
+    case 12:
+      var value = new proto.CloudSyncMessages.Timestamp;
+      reader.readMessage(value,proto.CloudSyncMessages.Timestamp.deserializeBinaryFromReader);
+      msg.setLasttimestamp(value);
       break;
     default:
       reader.skipField();
@@ -699,6 +716,29 @@ proto.CloudSyncMessages.TimelineInfo.serializeBinaryToWriter = function(message,
     writer.writeBool(
       9,
       f
+    );
+  }
+  f = message.getParenttimelineid();
+  if (f.length > 0) {
+    writer.writeString(
+      10,
+      f
+    );
+  }
+  f = message.getParentcorrelation();
+  if (f != null) {
+    writer.writeMessage(
+      11,
+      f,
+      proto.CloudSyncMessages.Correlation.serializeBinaryToWriter
+    );
+  }
+  f = message.getLasttimestamp();
+  if (f != null) {
+    writer.writeMessage(
+      12,
+      f,
+      proto.CloudSyncMessages.Timestamp.serializeBinaryToWriter
     );
   }
 };
@@ -836,6 +876,87 @@ proto.CloudSyncMessages.TimelineInfo.prototype.getIsavailable = function() {
 /** @param {boolean} value */
 proto.CloudSyncMessages.TimelineInfo.prototype.setIsavailable = function(value) {
   jspb.Message.setProto3BooleanField(this, 9, value);
+};
+
+
+/**
+ * optional string parentTimelineId = 10;
+ * @return {string}
+ */
+proto.CloudSyncMessages.TimelineInfo.prototype.getParenttimelineid = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 10, ""));
+};
+
+
+/** @param {string} value */
+proto.CloudSyncMessages.TimelineInfo.prototype.setParenttimelineid = function(value) {
+  jspb.Message.setProto3StringField(this, 10, value);
+};
+
+
+/**
+ * optional Correlation parentCorrelation = 11;
+ * @return {?proto.CloudSyncMessages.Correlation}
+ */
+proto.CloudSyncMessages.TimelineInfo.prototype.getParentcorrelation = function() {
+  return /** @type{?proto.CloudSyncMessages.Correlation} */ (
+    jspb.Message.getWrapperField(this, proto.CloudSyncMessages.Correlation, 11));
+};
+
+
+/** @param {?proto.CloudSyncMessages.Correlation|undefined} value */
+proto.CloudSyncMessages.TimelineInfo.prototype.setParentcorrelation = function(value) {
+  jspb.Message.setWrapperField(this, 11, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ */
+proto.CloudSyncMessages.TimelineInfo.prototype.clearParentcorrelation = function() {
+  this.setParentcorrelation(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.CloudSyncMessages.TimelineInfo.prototype.hasParentcorrelation = function() {
+  return jspb.Message.getField(this, 11) != null;
+};
+
+
+/**
+ * optional Timestamp lastTimestamp = 12;
+ * @return {?proto.CloudSyncMessages.Timestamp}
+ */
+proto.CloudSyncMessages.TimelineInfo.prototype.getLasttimestamp = function() {
+  return /** @type{?proto.CloudSyncMessages.Timestamp} */ (
+    jspb.Message.getWrapperField(this, proto.CloudSyncMessages.Timestamp, 12));
+};
+
+
+/** @param {?proto.CloudSyncMessages.Timestamp|undefined} value */
+proto.CloudSyncMessages.TimelineInfo.prototype.setLasttimestamp = function(value) {
+  jspb.Message.setWrapperField(this, 12, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ */
+proto.CloudSyncMessages.TimelineInfo.prototype.clearLasttimestamp = function() {
+  this.setLasttimestamp(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.CloudSyncMessages.TimelineInfo.prototype.hasLasttimestamp = function() {
+  return jspb.Message.getField(this, 12) != null;
 };
 
 
