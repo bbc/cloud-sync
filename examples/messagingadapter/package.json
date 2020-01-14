@@ -1,0 +1,23 @@
+{
+  "name": "joinREQ-client",
+  "version": "0.0.1",
+  "description": "JoinREQ JS client lib",
+  "author": {
+    "name": "Rajiv Ramdhany",
+    "email": "rajiv.ramdhany@bbc.co.uk"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "events": "^1.1.1",
+    "inherits": "^2.0.1",
+    "paho-mqtt": "^1.0.3",
+    "weak-map": "^1.0.5",
+    "dvbcss-clocks": "^0.0.4",
+    "dvbcss-protocols": "^0.0.2",
+    "reconnectingwebsocket": "^1.0.0",
+    "synckit-cloud": "file:../../"
+  },
+  "devDependencies": {
+    "typescript": "^2.4.2"
+  }
+}
