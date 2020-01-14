@@ -27,6 +27,7 @@ console.log(join_req);
 
 let joinREQByteArray = join_req.serialise();
 console.log("JoinREQ serialised to binary.");
+console.log(typeof joinREQByteArray);
 
 
 let parsedJoinReq = MessageFactory.JoinREQ.deserialise(joinREQByteArray);
@@ -41,7 +42,7 @@ console.log(MessageFactory.Message.deserialise(joinREQByteArray));
 // ---------------------------------------------------------
 
 
-let join_resp = new MessageFactory.JoinRESP(parsedJoinReq.sessionId, 0, "ws://192.168.1.225:6676", parsedJoinReq.id, parsedJoinReq.version);
+let join_resp = new MessageFactory.JoinRESP(parsedJoinReq.sessionId, 0, "ws://192.168.1.117:6676", parsedJoinReq.id, parsedJoinReq.version);
 
 console.log(join_resp);
 
