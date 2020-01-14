@@ -10,6 +10,9 @@ MessageFactory = require("../../message/Message");
 
 PRIVATE = new WeakMap();
 
+function typedArrayToBuffer(array) {
+    return array.buffer.slice(array.byteOffset, array.byteLength + array.byteOffset);
+}
 
 /**
  * @class MqttMessagingAdapter
@@ -35,7 +38,7 @@ PRIVATE = new WeakMap();
 MqttMessagingAdapter = function (host, port, user, options) {
 
     var priv, lastWill, opt,
-        sessionId, contextId;
+        sessionId, contextId, unExpExitMsgBytes;
 
     PRIVATE.set(this, {});
     priv = PRIVATE.get(this);
@@ -50,9 +53,14 @@ MqttMessagingAdapter = function (host, port, user, options) {
     priv.user = user;
     priv.subscribedChannels = new ChannelMap();
 
+
+    unExpExitMsgBytes = new MessageFactory.UnexpectedDeviceExit(sessionId, user).serialise();
     lastWill = {};
     lastWill.topic = "Sessions/lastwill";
-    lastWill.payload = new MessageFactory.UnexpectedDeviceExit(sessionId, user).serialise();
+    lastWill.payload = Buffer.from(unExpExitMsgBytes);
+
+    // console.log(JSON.stringify(typeof lastWill.payload));
+    // lastWill.payload = "last will message";
     lastWill.qos = 2;
     lastWill.retain = false;
 
