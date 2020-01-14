@@ -74,8 +74,10 @@ services:
     image: sessioncontroller
     ports:
       - "4000:4000"
-    command: -c http://consul:8500 -l development
+      - "5858:5858"
+    command: npm run debug
     volumes:
+      - ./src/sessioncontroller:/usr/src/sessioncontroller
       - ./src/sessioncontroller/src:/usr/src/sessioncontroller/src
     depends_on:
       - registrator
