@@ -24,6 +24,7 @@ var Messenger = require("../build/lib/Messenger");
 var MessagingAdapter = require("../../common/messenger/messagingadapter/MqttMessagingAdapter");
 var RedisConnection = require("../../common/datastore/redisconnection");  
 var RedisSMQConfig = require("../../common/events/RedisSMQConfig");
+const TimelineInfo = require("../../common/message/TimelineInfo");
 const Timeline = require("../../common/state/Timeline");
 const Device = require("../../common/state/Device");
 const Session = require("../../common/state/Session");
@@ -46,6 +47,7 @@ const kOnboardingChannel = "Sessions/REQ";
 const kSessionREQTopic = "Sessions/REQ";
 const kSessionRESPTopic = "Sessions/RESP";
 const kSessionLastWillTopic = "Sessions/lastwill";
+const kMockContextId = "MockContextId";
 
 // ---------------------------------------------------------
 //  MTenantSessionController class
@@ -215,10 +217,10 @@ function handleIncomingRequest (request) {
 
 	var self = this;
 
-	logger.debug("Received", request.type, "from device:", request.serialise());
-	logger.info("Received", request.type, "from device:", request.deviceId);
+	logger.debug("Received", request.messageType, "from device:", JSON.stringify(request));
+	logger.info("Received", request.messageType, "from device:", request.senderId);
 	
-	switch (request.type) {
+	switch (request.messageType) {
 	case "JoinREQ":
 		handleJoinREQ.call(self, request);
 		
@@ -302,17 +304,9 @@ function handleJoinREQ(request) {
 		return registerDevice.call(self, request, session);
 	}).then((result) =>{ 
 		
-		logger.info("JoinREQ handler: device %s added - %s", request.deviceId, result);
+		logger.info("JoinREQ handler: device %s added - %s", request.senderId, result);
 
-		var message = MessageFactory.create(
-			"DeviceStatus",
-			request.sessionId,
-			request.deviceId,
-			"online",
-			MessageIdGenerator.getNewId(),
-			"0.0.1",
-			request.contextId
-		);
+		var message = new MessageFactory.DeviceStatus(request.sessionId, request.senderId, request.senderId, "online");
 		var deviceStatusTopic = "Sessions/" + request.sessionId + "/state";
 		priv.messenger.send(message, deviceStatusTopic);
 		logger.info("JoinREQ handler: Sent DeviceStatus{'online'} msg to '", deviceStatusTopic, "'");
@@ -371,7 +365,7 @@ function registerDevice (request, session) {
 		return Promise.reject("registerDevice - Invalid session parameter");
 	else
 	{
-		var newDevice = new Device(request.deviceId, session.id, request.contextId, request.responseChannel, 
+		var newDevice = new Device(request.senderId, session.id, kMockContextId, request.responseChannel, 
 			request.requestChannel, priv.redisClient, true);
 		return session.addDevice(newDevice, true);
 	}
@@ -387,7 +381,9 @@ function registerDevice (request, session) {
  */
 function sendJoinResponse (request, responseCode, sessionInfo) {
 	var self = this;
-	sendResponse.call(self, "JoinRESP", request, responseCode, sessionInfo.wallclockUrl, sessionInfo.sessionControllerUrl);
+	var response = new MessageFactory.JoinRESP(request.sessionId, responseCode, sessionInfo.wallclockUrl, request.id, request.version);
+
+	sendResponse.call(self, response, request.responseChannel);
 }
 
 // ---------------------------------------------------------
@@ -407,23 +403,19 @@ function sendSyncTimelinesAvailable(session, channel)
 
 		session.getSyncTimelines().then((timelines)=>{
 
-			var timelinesInfo = [];	
+			var timelineInfoList = [];	
 	
 			for (let t of timelines) {
 				if (t instanceof Timeline){
 					var ti = t.getInfo();
-					timelinesInfo.push(ti);			
+					timelineInfoList.push(ti);			
 				}				
-			}	
-			message = MessageFactory.create(
-				"SyncTimelinesAvailable",
-				session.id,
-				timelinesInfo,
-				null,
-				"0.0.1"
-			);
+			}
+			
+			message = new MessageFactory.SyncTimelinesAvailable(session.id, timelineInfoList);
 			priv.messenger.send(message, channel);
 			resolve();
+
 		}).catch((err)=>{reject(err);});
 	});
 } 
@@ -444,15 +436,17 @@ function handleLeaveREQ(request) {
 	unRegisterDevice.call(self, request)
 		.catch(() => { sendLeaveResponse.call(self, request, 1 /* Processing Error */); })
 		.then(()=>{
-			var message = MessageFactory.create(
-				"DeviceStatus",
-				request.sessionId,
-				request.deviceId,
-				"offline",
-				MessageIdGenerator.getNewId(),
-				"0.0.1",
-				request.contextId
-			);
+
+			var message = new MessageFactory.DeviceStatus(request.sessionId, request.senderId, request.senderId, "offline");
+			// var message = MessageFactory.create(
+			// 	"DeviceStatus",
+			// 	request.sessionId,
+			// 	request.senderId,
+			// 	"offline",
+			// 	MessageIdGenerator.getNewId(),
+			// 	"0.0.1",
+			// 	request.contextId
+			// );
 		
 			priv.messenger.send(message, deviceStatusTopic);
 			logger.debug("SessionController sent:", message.serialise(),  " to '", deviceStatusTopic, "'");
@@ -499,7 +493,7 @@ function unRegisterDevice(request) {
 
 	return new Promise((resolve, reject)=>{
 
-		Device.getFromDataStore(request.deviceId, request.sessionId, priv.redisClient).then((device)=>{
+		Device.getFromDataStore(request.senderId, request.sessionId, priv.redisClient).then((device)=>{
 
 			if (device) return device.getTimelines();
 			else resolve(false);
@@ -513,7 +507,7 @@ function unRegisterDevice(request) {
 			// console.log(session);
 			if (session){
 				// console.log("unRegisterDevice():", session.id);
-				return session.removeDevice(request.deviceId);
+				return session.removeDevice(request.senderId);
 			}else
 				return Promise.resolve(false);
 		}).then((result)=>{
@@ -537,7 +531,10 @@ function unRegisterDevice(request) {
 
 function sendLeaveResponse (request, responseCode) {
 	var self = this;
-	sendResponse.call(self, "LeaveRESP", request, responseCode);
+
+	var response = new MessageFactory.LeaveRESP(request.sessionId, responseCode, request.id, request.version);
+
+	sendResponse.call(self, response, request.responseChannel);
 }
 
 
@@ -583,7 +580,10 @@ function handleDeviceREQ (request) {
 	
 function sendDeviceResponse (request, responseCode, devices) {
 	var self = this;
-	sendResponse.call(self, "DeviceRESP", request, responseCode, devices);
+
+	var response = new MessageFactory.DeviceRESP(request.sessionId, responseCode, devices, request.id, request.version);
+
+	sendResponse.call(self, response, request.responseChannel);
 }
 
 
@@ -640,8 +640,9 @@ function handleTimelineREQ (request) {
 		
 function sendTimelineResponse (request, responseCode, timelines) {
 	var self = this;
+	var response = new MessageFactory.TimelineRESP(request.sessionId, responseCode, timelines, request.id, request.version);
 
-	sendResponse.call(self, "TimelineRESP", request, responseCode, timelines);
+	sendResponse.call(self, response, request.responseChannel);
 }
 
 
@@ -699,7 +700,7 @@ function handleTimelineRegistrationREQ (request) {
 	
 			timeline = new Timeline(request.timelineId, session.id, request.contentId, 
 				request.timelineType, request.frequency, timelineUpdateChannel, 
-				request.deviceId, "Device", request.useForSessionSync, request.writable, 
+				request.senderId, "Device", request.useForSessionSync, false, 
 				"urn:wallclock", request.correlation, timestamp);
 
 			// console.log("************* TESTING ***************");
@@ -771,7 +772,10 @@ function handleTimelineRegistrationREQ (request) {
 function sendTimelineRegistrationResponse (request, responseCode, timelineUpdateChannel) {
 	var self = this;
 
-	sendResponse.call(self, "TimelineRegistrationRESP", request, responseCode, timelineUpdateChannel);
+	var response = new MessageFactory.TimelineRegistrationRESP(request.sessionId, responseCode, timelineUpdateChannel, request.id, request.version);
+
+	sendResponse.call(self, response, request.responseChannel);
+	// sendResponse.call(self, "TimelineRegistrationRESP", request, responseCode, timelineUpdateChannel);
 }
 
 // ---------------------------------------------------------
@@ -783,20 +787,20 @@ function sendNewSyncTLEventToQueue(request, timelineUpdateChannel, queue)
 
 	evhdr.setEventtype(proto.EventType.NEW_SYNC_TIMELINE);
 	evhdr.setSessionid(request.sessionId);
-	evhdr.setSenderid(request.deviceId);
+	evhdr.setSenderid(request.senderId);
 	evhdr.setVersion("1.0");
 	evhdr.setEventid(MessageIdGenerator.getNewId());
 
 
 	var evBody= new proto.NewSyncTLEvent();
-	evBody.setProviderid(request.deviceId);
+	evBody.setProviderid(request.senderId);
 	evBody.setTimelineid(request.timelineId);
 	evBody.setTimelinetype(request.timelineType);
 	evBody.setContentid(request.contentId);
 	evBody.setFrequency(request.frequency);
 	evBody.setChannel(timelineUpdateChannel);
 	evBody.setUseforsessionsync(request.useForSessionSync);
-	evBody.setWritable(request.writable);
+	evBody.setWritable(false);
 
 	var timestamp = new proto.PresentationTimestamp();
 	timestamp.setContenttime(request.correlation.childTime);
@@ -831,13 +835,13 @@ function sendDelSyncTLEventToQueue(request, timeline)
 
 	evhdr.setEventtype(proto.EventType.DEL_SYNC_TIMELINE);
 	evhdr.setSessionid(request.sessionId);
-	evhdr.setSenderid(request.deviceId);
+	evhdr.setSenderid(request.senderId);
 	evhdr.setVersion("1.0");
 	evhdr.setEventid(MessageIdGenerator.getNewId());
 
 
 	var evBody= new proto.DelSyncTLEvent();
-	evBody.setProviderid(request.deviceId);
+	evBody.setProviderid(request.senderId);
 	evBody.setTimelineid(timeline.id);
 	evBody.setTimelinetype(timeline.timelineType);
 	evBody.setContentid(timeline.contentId);
@@ -870,7 +874,6 @@ function handleTimelineSubscriptionREQ (request) {
 	var self = this;
 	var mytimeline;
 	
-
 	Timeline.getFromDataStore(request.timelineId, request.sessionId, priv.redisClient).then((timeline)=>{
 
 		if (timeline){
@@ -894,7 +897,10 @@ function handleTimelineSubscriptionREQ (request) {
 function sendTimelineSubscriptionResponse (request, responseCode, providerChannel, PresentationTimestamp) {
 	var self = this;
 	// console.log("sendTimelineSubscriptionResponse() providerChannel: ", providerChannel);
-	sendResponse.call(self, "TimelineSubscriptionRESP", request, responseCode, providerChannel);
+
+	var response = new MessageFactory.TimelineSubscriptionRESP(request.sessionId, responseCode, providerChannel, PresentationTimestamp, request.id, request.version);
+
+	sendResponse.call(self, response, request.responseChannel);
 }
 
 // ---------------------------------------------------------
@@ -905,22 +911,28 @@ function requestDeviceForTimelineUpdates(device, timeline)
 	var self = this;
 
 	return new Promise(function (resolve, reject) {
+		
+		var request = new MessageFactory.TimelineUpdateREQ(device.sessionId, "cloud-sync", kSessionRESPTopic, timeline.id, timeline.timelineType, timeline.contentId);
 
-		// sendRequest (type, sessionId, contextId, senderId, replyChannel, destinationChannel, onresponse, options) {
-		var message = sendRequest.call(self,
-			"TimelineUpdateREQ", // type
-			device.sessionId, // sessionId
-			device.contextId, // contextId
-			device.sessionId, // senderId			
-			kSessionRESPTopic, // replychannel
-			device.requestChannel, // destinationChannel
-			handleTimelineUpdateResponse.bind(self, resolve, reject), 
-			{},
-			timeline.id,
-			timeline.timelineType,
-			timeline.contentId
-		);
-		logger.debug("Sent 'TimelineUpdateREQ' ", message.serialise(), " to topic " , device.requestChannel);
+		var priv = PRIVATE.get(this);
+		
+		priv.messenger.sendRequest(request, device.requestChannel, handleTimelineUpdateResponse.bind(self, resolve, reject), {});
+		
+		//sendRequest (type, sessionId, contextId, senderId, replyChannel, destinationChannel, onresponse, options) 
+		// sendRequest.call(self,
+		// 	"TimelineUpdateREQ", // type
+		// 	device.sessionId, // sessionId
+		// 	device.contextId, // contextId
+		// 	device.sessionId, // senderId			
+		// 	kSessionRESPTopic, // replychannel
+		// 	device.requestChannel, // destinationChannel
+		// 	handleTimelineUpdateResponse.bind(self, resolve, reject), 
+		// 	{},
+		// 	timeline.id,
+		// 	timeline.timelineType,
+		// 	timeline.contentId
+		// );
+		logger.debug("Sent 'TimelineUpdateREQ' to topic " , device.requestChannel);
 	});
 
 }
@@ -958,16 +970,8 @@ function handleUnexpectedDeviceExit(message)
 	unRegisterDevice.call(self, message).then((result)=>{
 		logger.info("Device ", message.deviceId, " deleted from", message.sessionId, ": ", result);
 
-		var m = MessageFactory.create(
-			"DeviceStatus",
-			message.sessionId,
-			message.deviceId,
-			"offline",
-			MessageIdGenerator.getNewId(),
-			"0.0.1",
-			message.contextId
-		);
-		
+		var message = new MessageFactory.DeviceStatus(message.sessionId, message.senderId, message.senderId, "offline");
+
 		priv.messenger.send(m, deviceStatusTopic);
 		logger.debug("SessionController sent:", m.serialise(),  " to '", deviceStatusTopic, "'");
 			
@@ -1003,87 +1007,19 @@ function handleUnexpectedDeviceExit(message)
 // ---------------------------------------------------------
 // Utility methods
 // ---------------------------------------------------------
-
-function sendResponse (type, request, responseCode) {
+function sendResponse (response, responseChannel) {
 
 	var priv = PRIVATE.get(this);
-	
-	var args, i, response;
-	
-	args = [];
-	args[0] = type;
-	args[1] = request.sessionId;
-	args[2] = responseCode;
-	
-	// Add optional arguments
-	if (arguments.length > 3) {
-		for (i = 3; i < arguments.length; i++) {
-			args[i] = arguments[i];
-		}
-	}
-	
-	args[arguments.length] = request.id;
-	args[arguments.length + 1] = request.version;
-	
-	// if (type === "TimelineRegistrationRESP") 
-	// 	console.log(args);
-	response = MessageFactory.create.apply(null, args);
-	
+
 	// console.log("---------------");
 	// console.log(response);
 	// console.log("---------------");
 	
-	priv.messenger.send(response, request.responseChannel);
-	logger.debug("response sent: '" , response.serialise(), "' to channel " , request.responseChannel);
+	priv.messenger.send(response, responseChannel);
+	logger.debug("response sent: '" , response.id, "' to channel " , responseChannel);
 }
 	
 // --------------------------------------------------
-
-/**
- * Build and send a request message to a target channel
- * @param {string} type 
- * @param {*} sessionId 
- * @param {*} contextId 
- * @param {*} senderId 
- * @param {*} replyChannel 
- * @param {*} destinationChannel 
- * @param {*} onresponse 
- * @param {*} options 
- */
-function sendRequest (type, sessionId, contextId, senderId, replyChannel, destinationChannel, onresponse, options) {
-    
-	var args, priv, i, j, request, opt;
-
-	priv = PRIVATE.get(this);
-	opt = options || {};
-
-	args = [];
-	args[0] = type;
-	args[1] = sessionId;
-	args[2] = contextId;
-	args[3] = senderId;
-	args[4] = replyChannel;
-
-	i = 4;
-	j=8;
-
-	// Add optional arguments
-	if (arguments.length > 7) {
-		for (; j < arguments.length; j++, i++) {
-			args[i+1] = arguments[j];
-		}
-	}
-
-	args[i+1] = MessageIdGenerator.getNewId();
-	args[i+2] = "0.0.1";
-	// console.log(args);
-	request = MessageFactory.create.apply(null, args);
-	priv.messenger.sendRequest(request, destinationChannel, onresponse, options);
-
-	return request;
-}
-
-// ---------------------------------------------------------
 
 
 function firstInSequence(values, asyncFn) {
