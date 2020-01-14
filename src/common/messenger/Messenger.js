@@ -6,6 +6,7 @@ events = require("events");
 inherits = require("inherits");
 Messages = require("../message/Message");
 MessageDispatcher = require("./messagedispatcher/MessageDispatcher");
+var Buffer = require('buffer').Buffer;
 
 PRIVATE = new WeakMap();
 
@@ -120,11 +121,11 @@ function handleMessage (message) {
 
     message = Messages.Message.deserialise(message);
 
-    // console.log("In handleMessage: deserialised message = " + JSON.stringify(message));
+    console.log("In handleMessage: deserialised message = " + JSON.stringify(message));
     
     if (PRIVATE.get(this).dispatcher.call(message)) {
         // Passed message to response handler; no further action required
-        // console.log("In handleMessage: deserialised message passed to response handler.");
+        console.log("In handleMessage: deserialised message passed to response handler.");
     }
 
     else if (message.hasOwnProperty("responseChannel") && (message.responseChannel!=="")) {
@@ -152,7 +153,20 @@ Messenger.prototype.getClientId = function () {
  * @param {boolean} options.retain retain message copy in channel for clients joining after the send.
  */
 Messenger.prototype.send = function (message, channel, options) {
-    PRIVATE.get(this).client.send(message.serialise(), channel, options);
+
+    opt = options || {};
+    
+    binary = opt.binary || false;
+    
+    if (typeof message.serialise === "function")
+    {
+       PRIVATE.get(this).client.send(message.serialise(), channel, options);
+        
+    }else{
+        PRIVATE.get(this).client.send(message, channel, options);
+    }
+
+    
 };
 
 /**
