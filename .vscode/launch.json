@@ -1,0 +1,18 @@
+{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Docker Attach to SessionController node app",
+			"type": "node",
+			"request": "attach",
+			"port": 5858,
+			"address": "localhost",
+			"localRoot": "${workspaceFolder}/src/sessioncontroller/src",
+			"remoteRoot": "/usr/src/sessioncontroller/src",
+			"protocol": "inspector"
+		}
+	]
+}
