@@ -19,8 +19,8 @@
 //  Declarations
 // ---------------------------------------------------------
 var MessageIdGenerator = require("../../common/message/MessageIdGenerator");
-var MessageFactory = require("../build/lib/MessageFactory");
-var Messenger = require("../build/lib/Messenger");
+var MessageFactory = require("../../common/message/Message");
+var Messenger = require("../../common/messenger/Messenger");
 var MessagingAdapter = require("../../common/messenger/messagingadapter/MqttMessagingAdapter");
 var RedisConnection = require("../../common/datastore/redisconnection");  
 var RedisSMQConfig = require("../../common/events/RedisSMQConfig");
@@ -219,33 +219,32 @@ function handleIncomingRequest (request) {
 
 	logger.debug("Received", request.messageType, "from device:", JSON.stringify(request));
 	logger.info("Received", request.messageType, "from device:", request.senderId);
+	logger.info("Received", request.messageType, "from device:", request.senderId);
 	
 	switch (request.messageType) {
-	case "JoinREQ":
+	case MessageFactory.MessageType.JOIN_REQ:
 		handleJoinREQ.call(self, request);
 		
 		break;
-	case "LeaveREQ":
+	case MessageFactory.MessageType.LEAVE_REQ:
 		handleLeaveREQ.call(self, request);
 		
 		break;
-	case "DeviceREQ":
+	case MessageFactory.MessageType.DEVICE_REQ:
 		handleDeviceREQ.call(self, request);
 		
 		break;
-	case "TimelineREQ":
+	case MessageFactory.MessageType.TIMELINE_REQ:
 		handleTimelineREQ.call(self, request);
 		break;
-	case "ContextREQ":
-		handleContextREQ.call(self, request);
-		break;
-	case "TimelineRegistrationREQ":
+	
+	case MessageFactory.MessageType.TIMELINE_REG_REQ:
 		handleTimelineRegistrationREQ.call(self, request);
 		break;
-	case "TimelineSubscriptionREQ":
+	case MessageFactory.MessageType.TIMELINE_SUB_REQ:
 		handleTimelineSubscriptionREQ.call(self, request);
 		break;
-	case "UnexpectedDeviceExit":
+	case MessageFactory.MessageType.UNEXPECTED_DEVICE_EXIT:
 		handleUnexpectedDeviceExit.call(self, request);
 		break;
 	default:
@@ -308,8 +307,10 @@ function handleJoinREQ(request) {
 
 		var message = new MessageFactory.DeviceStatus(request.sessionId, request.senderId, request.senderId, "online");
 		var deviceStatusTopic = "Sessions/" + request.sessionId + "/state";
+		console.log("======================== TEST 2 ====================");
 		priv.messenger.send(message, deviceStatusTopic);
-		logger.info("JoinREQ handler: Sent DeviceStatus{'online'} msg to '", deviceStatusTopic, "'");
+		console.log("======================== TEST 3 ====================");
+		logger.debug("JoinREQ handler: Sent DeviceStatus{'online'} msg to '", deviceStatusTopic, "'");
 		// logger.debug("JoinREQ handler: SessionController sent:", message.serialise(),  " to '", deviceStatusTopic, "'");
 
 		sendJoinResponse.call(self, request, 0, sessionInfo /* OKAY */);
