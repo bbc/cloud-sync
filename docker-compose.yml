@@ -86,7 +86,7 @@ services:
     labels:
       - "SERVICE_NAME=sessioncontroller"
     environment:
-        WALLCLOCK_SERVICE_WS_URL:  wss://wallclock-service.virt.ch.bbc.co.uk
+        WALLCLOCK_SERVICE_WS_URL:  ws://localhost:6676
     networks:
       2immerse:
         aliases:
