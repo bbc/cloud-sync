@@ -157,13 +157,18 @@ Messenger.prototype.send = function (message, channel, options) {
     opt = options || {};
     
     binary = opt.binary || false;
+
+    var client =  PRIVATE.get(this).client;
     
     if (typeof message.serialise === "function")
     {
-       PRIVATE.get(this).client.send(message.serialise(), channel, options);
+       
+       var msgbytes = message.serialise();
+       
+        client.send(msgbytes, channel, options);
         
     }else{
-        PRIVATE.get(this).client.send(message, channel, options);
+        client.send(message, channel, options);
     }
 
     
