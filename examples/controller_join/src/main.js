@@ -69,27 +69,27 @@ console.log("Received response: " + msg);
 
 }
 
-// function joinSession () 
-// {
+function joinSession () 
+{
 
-// var joinRequest;
+var joinRequest;
 
-// let sessionId = "abc123";
-// let deviceId = "rajivr_iphone";
-// let responseChannel = "test_channel";
-// let requestChannel = "test_channel";
-// let syncStrategy = 2;
+let sessionId = "abc123";
+let deviceId = "rajivr_iphone";
+let responseChannel = "test_channel";
+let requestChannel = "test_channel";
+let syncStrategy = 2;
 
-// console.log("Create JoinREQ msg ...");
-// let join_req = new MessageFactory.JoinREQ(sessionId, deviceId, responseChannel, requestChannel, syncStrategy);
+console.log("Create JoinREQ msg ...");
+let join_req = new MessageFactory.JoinREQ(sessionId, deviceId, responseChannel, requestChannel, syncStrategy);
 
 
-// // var request = join_req.serialise();
+// var request = join_req.serialise();
 
-// var options = {retry: true, retryTimes: 5, retryDelay: 1};
-// console.log("Send JoinREQ msg ...");
-// // messenger.send(Buffer.from(request), requestChannel);
-// messenger.send(join_req, requestChannel);
-// }
+var options = {retry: true, retryTimes: 5, retryDelay: 1};
+console.log("Send JoinREQ msg ...");
+// messenger.send(Buffer.from(request), requestChannel);
+messenger.send(join_req, requestChannel);
+}
 
 
