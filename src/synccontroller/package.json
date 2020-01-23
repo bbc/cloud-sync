@@ -1,12 +1,15 @@
 {
   "name": "sync-controller",
   "version": "0.0.1",
-  "description": "SyncContoller",
+  "description": "SyncController",
   "main": "src/main.js",
   "directories": {
     "example": "examples"
   },
-  "scripts": {},
+  "scripts": {
+    "start": "node ./src/main.js -c http://consul:8500 -l development",
+    "debug": "nodemon --legacy-watch --watch ./src --inspect=0.0.0.0:5859 --nolazy ./src/main.js -c http://consul:8500 -l development"
+  },
   "author": {
     "name": "Rajiv Ramdhany",
     "email": "rajiv.ramdhany@bbc.co.uk"
@@ -14,6 +17,7 @@
   "license": "UNLICENSED",
   "dependencies": {
     "async": "^2.5.0",
+    "buffer": "^5.4.3",
     "command-line-args": "^4.0.6",
     "consul": "^0.29.0",
     "dvbcss-clocks": "^0.0.4",
@@ -37,6 +41,7 @@
     "grunt-contrib-watch": "^1.0.0",
     "grunt-webpack": "^3.1.3",
     "webpack": "^4.41.4",
-    "webpack-dev-server": "^3.10.1"
+    "webpack-dev-server": "^3.10.1",
+    "nodemon": "^1.11.0"
   }
 }
