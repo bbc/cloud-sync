@@ -180,7 +180,6 @@ try {
 		port: c.port
 	};
 
-	logger.debug(" ======================== TEST 1 ====================================");
 	logger.debug("consul: ", consulOpt);
 
 
