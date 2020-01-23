@@ -217,9 +217,9 @@ function handleIncomingRequest (request) {
 
 	var self = this;
 
-	logger.debug("Received", request.messageType, "from device:", JSON.stringify(request));
-	logger.info("Received", request.messageType, "from device:", request.senderId);
-	logger.info("Received", request.messageType, "from device:", request.senderId);
+	logger.debug(" ============================ REQ RECEIVED ====================================");
+	logger.debug("Received msg type: ", request.messageType, "from device:", JSON.stringify(request));
+	// logger.info("Received", request.messageType, "from device:", request.senderId);
 	
 	switch (request.messageType) {
 	case MessageFactory.MessageType.JOIN_REQ:
@@ -248,7 +248,7 @@ function handleIncomingRequest (request) {
 		handleUnexpectedDeviceExit.call(self, request);
 		break;
 	default:
-		logger.warn("No handler for", request.type,"request");
+		logger.warn("No handler for", request.messageType,"request");
 	}
 
 	
@@ -262,19 +262,20 @@ function handleIncomingRequest (request) {
  */	
 function handleIncomingMessage (message) {
 		
-	logger.debug("Received", message.type, "message:", message.serialise());
+	logger.debug(" ============================ MSG RECEIVED ====================================");
+	logger.debug("Received message type: ", message.messageType, "message:", JSON.stringify(message));
 
 	var self = this;
 		
-	switch (message.type) {
-	case "ContentIdChange":
+	switch (message.messageType) {
+	case MessageFactory.MessageType.CONTENT_ID_CHANGE:
 		handleContentIdChange.call(this, message);
 		break;
-	case "UnexpectedDeviceExit":
+	case MessageFactory.MessageType.UNEXPECTED_DEVICE_EXIT:
 		handleUnexpectedDeviceExit.call(self, message);
 		break;
 	default:
-		logger.warn("No handler for", message.type,"request");
+		logger.warn("No handler for message type: ", message.messageType);
 	}
 }
 
@@ -307,12 +308,11 @@ function handleJoinREQ(request) {
 
 		var message = new MessageFactory.DeviceStatus(request.sessionId, request.senderId, request.senderId, "online");
 		var deviceStatusTopic = "Sessions/" + request.sessionId + "/state";
-		console.log("======================== TEST 2 ====================");
+		
 		priv.messenger.send(message, deviceStatusTopic);
-		console.log("======================== TEST 3 ====================");
+	
 		logger.debug("JoinREQ handler: Sent DeviceStatus{'online'} msg to '", deviceStatusTopic, "'");
-		// logger.debug("JoinREQ handler: SessionController sent:", message.serialise(),  " to '", deviceStatusTopic, "'");
-
+	
 		sendJoinResponse.call(self, request, 0, sessionInfo /* OKAY */);
 		return true;
 	}).then(()=>{
@@ -439,18 +439,11 @@ function handleLeaveREQ(request) {
 		.then(()=>{
 
 			var message = new MessageFactory.DeviceStatus(request.sessionId, request.senderId, request.senderId, "offline");
-			// var message = MessageFactory.create(
-			// 	"DeviceStatus",
-			// 	request.sessionId,
-			// 	request.senderId,
-			// 	"offline",
-			// 	MessageIdGenerator.getNewId(),
-			// 	"0.0.1",
-			// 	request.contextId
-			// );
-		
+					
 			priv.messenger.send(message, deviceStatusTopic);
-			logger.debug("SessionController sent:", message.serialise(),  " to '", deviceStatusTopic, "'");
+			logger.debug("handleLeaveREQ() - SessionController sent:" , JSON.stringify(message) ,  " to '", deviceStatusTopic, "'");
+
+
 			sendLeaveResponse.call(self, request, 0 /* OKAY */);
 			return Session.getFromDataStore(request.sessionId, priv.redisClient);				
 			
@@ -725,7 +718,7 @@ function handleTimelineRegistrationREQ (request) {
 			// logger.debug("request.useForSessionSync: " + request.useForSessionSync);
 			if ((typeof request.useForSessionSync != "undefined") && (request.useForSessionSync == true))
 			{
-				sendNewSyncTLEventToQueue.call(self, request,timelineUpdateChannel, kSyncControllerQueueKey);
+				sendNewSyncTLEventToQueue.call(self, request, timelineUpdateChannel, kSyncControllerQueueKey);
 			}
 		}else
 		{
@@ -966,15 +959,16 @@ function handleUnexpectedDeviceExit(message)
 	var deviceStatusTopic = "Sessions/" + message.sessionId + "/state";
 	var mysession;
 
-	logger.info("Device ", message.deviceId, " has left the session ", message.sessionId);
+	logger.info("Device ", message.senderId, " has left the session ", message.sessionId);
 
 	unRegisterDevice.call(self, message).then((result)=>{
-		logger.info("Device ", message.deviceId, " deleted from", message.sessionId, ": ", result);
+		logger.info("Device ", message.senderId, " deleted from", message.sessionId, ": ", result);
 
-		var message = new MessageFactory.DeviceStatus(message.sessionId, message.senderId, message.senderId, "offline");
+		var m = new MessageFactory.DeviceStatus(message.sessionId, message.senderId, message.senderId, "offline");
+		logger.debug("handleUnexpectedDeviceExit() - SessionController sent:" , JSON.stringify(m) ,  " to '", deviceStatusTopic, "'");
 
 		priv.messenger.send(m, deviceStatusTopic);
-		logger.debug("SessionController sent:", m.serialise(),  " to '", deviceStatusTopic, "'");
+		
 			
 		return Session.getFromDataStore(message.sessionId, priv.redisClient);			
 	}).then((session)=>{
