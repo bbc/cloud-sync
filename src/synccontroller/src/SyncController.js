@@ -20,8 +20,8 @@
 //  Declarations
 // ---------------------------------------------------------
 var MessageIdGenerator = require("../../common/message/MessageIdGenerator");
-var MessageFactory = require("..//build/lib/MessageFactory");
-var Messenger = require("../build/lib/Messenger");
+var MessageFactory = require("../../common/message/Message");
+var Messenger = require("../../common/messenger/Messenger");
 var MessagingAdapter = require("../../common/messenger/messagingadapter/MqttMessagingAdapter");
 var PresentationTimestamp = require("../../common/state/PresentationTimestamp");
 var RedisConnection = require("../../common/datastore/redisconnection");  
