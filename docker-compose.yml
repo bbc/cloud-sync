@@ -98,10 +98,13 @@ services:
       dockerfile: synccontroller/Dockerfile
     image: synccontroller
     ports:
-      - "3002"
-    command: -c http://consul:8500 -l development
+      - "3002:3002"
+      - "5859:5859"
+    command: npm run debug
     volumes:
+      - ./src/synccontroller:/usr/src/synccontroller
       - ./src/synccontroller/src:/usr/src/synccontroller/src
+      
     depends_on:
       - registrator
       - mqttbroker
@@ -110,7 +113,7 @@ services:
     labels:
       - "SERVICE_NAME=synccontroller"
     environment:
-        WALLCLOCK_SERVICE_WS_URL: wss://wallclock-service.virt.ch.bbc.co.uk
+        WALLCLOCK_SERVICE_WS_URL: ws://localhost:6676
     networks:
       2immerse:
         aliases:
