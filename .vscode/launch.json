@@ -5,13 +5,23 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Docker Attach to SessionController node app",
+			"name": "Debug SessionController node app in Docker",
 			"type": "node",
 			"request": "attach",
 			"port": 5858,
 			"address": "localhost",
 			"localRoot": "${workspaceFolder}/src/sessioncontroller/src",
 			"remoteRoot": "/usr/src/sessioncontroller/src",
+			"protocol": "inspector"
+		},
+		{
+			"name": "Debug SyncController node app in Docker",
+			"type": "node",
+			"request": "attach",
+			"port": 5859,
+			"address": "localhost",
+			"localRoot": "${workspaceFolder}/src/synccontroller/src",
+			"remoteRoot": "/usr/src/synccontroller/src",
 			"protocol": "inspector"
 		}
 	]
