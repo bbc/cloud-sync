@@ -2218,7 +2218,7 @@ class DeviceStatus extends Message
 		var packet = new proto.CloudSyncMessages.Packet();
 		packet.setHeader(msghdr);
 		packet.setPayload(payloadAsBytes);
-		console.log(" =========== TEST 4 ==============");
+
 		var bytes = Buffer.from(packet.serializeBinary());
 		return bytes;
 
