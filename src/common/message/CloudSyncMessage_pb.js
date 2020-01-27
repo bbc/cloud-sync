@@ -3235,8 +3235,7 @@ proto.CloudSyncMessages.TimelineSubscriptionRESP.prototype.toObject = function(o
  */
 proto.CloudSyncMessages.TimelineSubscriptionRESP.toObject = function(includeInstance, msg) {
   var f, obj = {
-    providerchannel: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    presentationtimestamp: (f = msg.getPresentationtimestamp()) && proto.CloudSyncMessages.PresentationTimestamp.toObject(includeInstance, f)
+    timeline: (f = msg.getTimeline()) && proto.CloudSyncMessages.TimelineInfo.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -3274,13 +3273,9 @@ proto.CloudSyncMessages.TimelineSubscriptionRESP.deserializeBinaryFromReader = f
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setProviderchannel(value);
-      break;
-    case 2:
-      var value = new proto.CloudSyncMessages.PresentationTimestamp;
-      reader.readMessage(value,proto.CloudSyncMessages.PresentationTimestamp.deserializeBinaryFromReader);
-      msg.setPresentationtimestamp(value);
+      var value = new proto.CloudSyncMessages.TimelineInfo;
+      reader.readMessage(value,proto.CloudSyncMessages.TimelineInfo.deserializeBinaryFromReader);
+      msg.setTimeline(value);
       break;
     default:
       reader.skipField();
@@ -3311,60 +3306,38 @@ proto.CloudSyncMessages.TimelineSubscriptionRESP.prototype.serializeBinary = fun
  */
 proto.CloudSyncMessages.TimelineSubscriptionRESP.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getProviderchannel();
-  if (f.length > 0) {
-    writer.writeString(
-      1,
-      f
-    );
-  }
-  f = message.getPresentationtimestamp();
+  f = message.getTimeline();
   if (f != null) {
     writer.writeMessage(
-      2,
+      1,
       f,
-      proto.CloudSyncMessages.PresentationTimestamp.serializeBinaryToWriter
+      proto.CloudSyncMessages.TimelineInfo.serializeBinaryToWriter
     );
   }
 };
 
 
 /**
- * optional string providerChannel = 1;
- * @return {string}
+ * optional TimelineInfo timeline = 1;
+ * @return {?proto.CloudSyncMessages.TimelineInfo}
  */
-proto.CloudSyncMessages.TimelineSubscriptionRESP.prototype.getProviderchannel = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+proto.CloudSyncMessages.TimelineSubscriptionRESP.prototype.getTimeline = function() {
+  return /** @type{?proto.CloudSyncMessages.TimelineInfo} */ (
+    jspb.Message.getWrapperField(this, proto.CloudSyncMessages.TimelineInfo, 1));
 };
 
 
-/** @param {string} value */
-proto.CloudSyncMessages.TimelineSubscriptionRESP.prototype.setProviderchannel = function(value) {
-  jspb.Message.setProto3StringField(this, 1, value);
-};
-
-
-/**
- * optional PresentationTimestamp presentationTimestamp = 2;
- * @return {?proto.CloudSyncMessages.PresentationTimestamp}
- */
-proto.CloudSyncMessages.TimelineSubscriptionRESP.prototype.getPresentationtimestamp = function() {
-  return /** @type{?proto.CloudSyncMessages.PresentationTimestamp} */ (
-    jspb.Message.getWrapperField(this, proto.CloudSyncMessages.PresentationTimestamp, 2));
-};
-
-
-/** @param {?proto.CloudSyncMessages.PresentationTimestamp|undefined} value */
-proto.CloudSyncMessages.TimelineSubscriptionRESP.prototype.setPresentationtimestamp = function(value) {
-  jspb.Message.setWrapperField(this, 2, value);
+/** @param {?proto.CloudSyncMessages.TimelineInfo|undefined} value */
+proto.CloudSyncMessages.TimelineSubscriptionRESP.prototype.setTimeline = function(value) {
+  jspb.Message.setWrapperField(this, 1, value);
 };
 
 
 /**
  * Clears the message field making it undefined.
  */
-proto.CloudSyncMessages.TimelineSubscriptionRESP.prototype.clearPresentationtimestamp = function() {
-  this.setPresentationtimestamp(undefined);
+proto.CloudSyncMessages.TimelineSubscriptionRESP.prototype.clearTimeline = function() {
+  this.setTimeline(undefined);
 };
 
 
@@ -3372,8 +3345,8 @@ proto.CloudSyncMessages.TimelineSubscriptionRESP.prototype.clearPresentationtime
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.CloudSyncMessages.TimelineSubscriptionRESP.prototype.hasPresentationtimestamp = function() {
-  return jspb.Message.getField(this, 2) != null;
+proto.CloudSyncMessages.TimelineSubscriptionRESP.prototype.hasTimeline = function() {
+  return jspb.Message.getField(this, 1) != null;
 };
 
 

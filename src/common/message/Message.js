@@ -1535,22 +1535,15 @@ class TimelineSubscriptionRESP extends Message
 	 * @param {string} msgId 
 	 * @param {string} version 
 	 */
-	constructor(sessionId, responseCode, providerChannel, presentationTimestamp, msgId, version)
+	constructor(sessionId, responseCode, timeline, msgId, version)
 	{
 		super(proto.CloudSyncMessages.MessageType.TIMELINE_SUB_RESP, sessionId, version, "cloud-sync", null, responseCode, msgId);
 		
-		if ((providerChannel !=="undefined") && (providerChannel !== null) && (providerChannel !== ""))
+		if ((timeline !=="undefined") && (timeline !== null))
 		{
-			this.providerChannel = providerChannel;
+			this.timeline = timeline;
 		}
-				
-		if ((typeof presentationTimestamp !== "undefined") && (presentationTimestamp!==null))
-		{
-			if (typeof presentationTimestamp.actual !== "undefined")
-			{
-				this.presentationTimestamp = presentationTimestamp;
-			}
-		}
+	
 	}
 
 		/**
@@ -1603,6 +1596,78 @@ class TimelineSubscriptionRESP extends Message
 		return proto_pts;
 	}
 
+	static protoTimelineInfoFromTimeline(timeline)
+	{
+				
+		var pbTlInfo = new proto.CloudSyncMessages.TimelineInfo();
+
+		var timelineId = (typeof timeline.timelineId !== "undefined") ? timeline.timelineId : timeline.id;
+
+		pbTlInfo.setTimelineid(timelineId);
+		pbTlInfo.setTimelinetype(timeline.timelineType);
+		if (typeof timeline.contentId !== "undefined") pbTlInfo.setContentid(timeline.contentId);
+		if (typeof timeline.frequency !== "undefined") pbTlInfo.setFrequency(timeline.frequency);
+		if (typeof timeline.channel !== "undefined") pbTlInfo.setChannel(timeline.channel);
+		if (typeof timeline.providerId !== "undefined") pbTlInfo.setProviderid(timeline.providerId);
+		if (typeof timeline.providerType !== "undefined") pbTlInfo.setProvidertype(timeline.providerType);
+
+		if ((typeof timeline.parentTL !== "undefined") && (timeline.parentTL !== null)) pbTlInfo.setParenttimelineid(timeline.parentTL);
+
+		if ((typeof timeline.parentTLCorr !== "undefined") && (timeline.parentTLCorr !== null))
+		{	
+			var corr = new proto.CloudSyncMessages.Correlation();
+			corr.setParenttime(timeline.parentTLCorr.parentTime);
+			corr.setChildtime(timeline.parentTLCorr.childTime);
+			if (typeof timeline.parentTLCorr.initialError !== "undefined")
+			{
+				corr.setInitialerror(timeline.parentTLCorr.initialError);
+			}
+			if (typeof timeline.parentTLCorr.errorGrowthRate !== "undefined")
+			{
+				corr.setErrorgrowthrate(timeline.parentTLCorr.errorGrowthRate);
+			}
+			
+			pbTlInfo.setParentcorrelation(corr);
+		} 
+		
+		if ((typeof timeline.lastTimestamp !== "undefined") && (timeline.lastTimestamp !== null))
+		{
+			pbTlInfo.setLasttimestamp(TimelineSubscriptionRESP.protoTimestampFromTimestamp(timeline.lastTimestamp));
+		}
+		return pbTlInfo;
+	}
+
+
+	static timelineFromprotoTimelineInfo(pbTlInfo)
+	{
+		if ((typeof pbTlInfo === "undefined") && (pbTlInfo === null))
+			return null;
+		
+		let pbCorr = pbTlInfo.getParentcorrelation();
+		let corr = null;
+
+		if ((pbCorr !== null) && (typeof pbCorr !== "undefined"))
+		{
+			corr = new Correlation(pbCorr.getParenttime(), pbCorr.getChildtime(), pbCorr.getInitialerror(), pbCorr.getErrorgrowthrate());
+		}
+
+		let timeline =  new TimelineInfo(pbTlInfo.getTimelineid(),
+			pbTlInfo.getTimelinetype(),
+			pbTlInfo.getContentid(),
+			pbTlInfo.getFrequency(),
+			pbTlInfo.getChannel(),
+			pbTlInfo.getProviderid(),
+			pbTlInfo.getProvidertype(),
+			pbTlInfo.getParenttimelineid(),
+			corr,
+			TimelineSubscriptionRESP.timestampFromProtoTimestamp(pbTlInfo.getLasttimestamp())
+			);
+		
+			
+		
+		return timeline;
+	}
+
 	/**
 	 * Serialise to binary array (Uint8Array) using Protocol Buffers.
 	 */
@@ -1625,16 +1690,12 @@ class TimelineSubscriptionRESP extends Message
 		// packet payload
 		var  payload = new proto.CloudSyncMessages.TimelineSubscriptionRESP();
 		
-		if (typeof this.providerChannel !== "undefined")
+		
+		if ((typeof this.timeline !=="undefined") && (this.timeline !== null))
 		{
-			payload.setProviderchannel(this.providerChannel);
+			payload.setTimeline(TimelineSubscriptionRESP.protoTimelineInfoFromTimeline(this.timeline));
 		}
-			
-
-		if ((typeof this.presentationTimestamp !== "undefined") && (this.presentationTimestamp !== null))
-		{
-			payload.setPresentationtimestamp( TimelineSubscriptionRESP.protoPresentationTimestampFromPTS(this.presentationTimestamp));
-		}		
+		
 		var payloadAsBytes = payload.serializeBinary();
 
 		// create packet
@@ -1653,6 +1714,7 @@ class TimelineSubscriptionRESP extends Message
 	 */
 	static timestampFromProtoTimestamp(protoTimestamp)
 	{
+
 		if ((protoTimestamp === null) || (typeof protoTimestamp === "undefined"))
 			return null;
 		
@@ -1673,9 +1735,6 @@ class TimelineSubscriptionRESP extends Message
 			(typeof pbPTS.getActual !== "function") ||
 			(typeof pbPTS.getLatest !== "function"))
 			return  null;
-		// console.log("****");
-		// console.log(pbPTS.getActual().getContenttime());
-		// console.log("****");
 
 		let pbEarliest = pbPTS.getEarliest(), pbActual = pbPTS.getActual(), pbLatest = pbPTS.getLatest();
 
@@ -1711,15 +1770,12 @@ class TimelineSubscriptionRESP extends Message
 		let payload = pbPacket.getPayload();
 		let pbRESP = proto.CloudSyncMessages.TimelineSubscriptionRESP.deserializeBinary(payload);
 
-		let providerChannel = pbRESP.getProviderchannel();
-
-		let pb_pts = pbRESP.getPresentationtimestamp();
-
-
+		
+		let timeline = TimelineSubscriptionRESP.timelineFromprotoTimelineInfo(pbRESP.getTimeline());
+		
 		return new TimelineSubscriptionRESP(header.getSessionid(),
 											header.getResponsecode(),
-											providerChannel,
-											TimelineSubscriptionRESP.presentationTimestampFromProtoPTS(pb_pts),
+											timeline,
 											header.getMessageid(),
 											header.getVersion());
 	}

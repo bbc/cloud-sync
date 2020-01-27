@@ -98,8 +98,7 @@ message TimelineSubscriptionREQ {
 }
 
 message TimelineSubscriptionRESP {
-    string providerChannel = 1;
-    PresentationTimestamp presentationTimestamp = 2;
+    TimelineInfo timeline = 1;
 }
 
 message TimelineUpdateREQ {
