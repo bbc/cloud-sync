@@ -728,6 +728,7 @@ function sendTimelineUpdate(timeline) {
 	logger.debug("sendTimelineUpdate: publishing this timestamp in synctimeline channel:", JSON.stringify(timeObject));
 	// console.log(timeObject);
 
+
 	message = new MessageFactory.TimelineUpdate(timeline.sessionId, 
 												timeline.providerId,
 												timeline.id,
@@ -736,19 +737,7 @@ function sendTimelineUpdate(timeline) {
 												new PresentationTimestamp(timeObject)
 												);
 
-	// message = MessageFactory.create(
-	// 	"TimelineUpdate",
-	// 	timeline.sessionId,
-	// 	timeline.providerId,
-	// 	timeline.id,
-	// 	timeline.timelineType,
-	// 	timeline.contentId,
-	// 	new PresentationTimestamp(timeObject),
-	// 	null,
-	// 	"0.0.1"
-	// );
-	//  { qos: 0, retain: true }
-	priv.messenger.send(message, timeline.channel, { qos: 0, retain: true });
+	priv.messenger.send(message, timeline.channel, { qos: 1, retain: true });
 	logger.debug("sendTimelineUpdate: sent  message to channel %s", timeline.channel);
 }
 
