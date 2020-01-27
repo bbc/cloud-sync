@@ -218,7 +218,7 @@ function handleIncomingRequest (request) {
 	var self = this;
 
 	logger.debug(" ============================ REQ RECEIVED ====================================");
-	logger.debug("Received msg type: ", request.messageType, "from device:", JSON.stringify(request));
+	logger.debug("Received request: ", messageTypeAsString(request), " : ", JSON.stringify(request));
 	// logger.info("Received", request.messageType, "from device:", request.senderId);
 	
 	switch (request.messageType) {
@@ -261,11 +261,11 @@ function handleIncomingRequest (request) {
  * @param {Message} message 
  */	
 function handleIncomingMessage (message) {
-		
-	logger.debug(" ============================ MSG RECEIVED ====================================");
-	logger.debug("Received message type: ", message.messageType, "message:", JSON.stringify(message));
 
 	var self = this;
+
+	logger.debug(" ============================ MSG RECEIVED ====================================");
+	logger.debug("Received message ", messageTypeAsString(message), " : ", JSON.stringify(message));
 		
 	switch (message.messageType) {
 	case MessageFactory.MessageType.CONTENT_ID_CHANGE:
@@ -318,7 +318,7 @@ function handleJoinREQ(request) {
 	}).then(()=>{
 		return sendSyncTimelinesAvailable.call(self, currentSession, request.responseChannel);
 	}).then(()=>{
-		logger.debug("JoinREQ handler: Sent SyncTimelinesAvailable message to channel: ", request.responseChannel);
+		logger.debug("JoinREQ handler: Sent SYNC_TIMELINES_AVAILABLE message to channel: ", request.responseChannel);
 	}).catch(() =>{ 
 		sendJoinResponse.call(self, request, 1, sessionInfo /* Processing Error */);
 	});	
@@ -871,10 +871,10 @@ function handleTimelineSubscriptionREQ (request) {
 	Timeline.getFromDataStore(request.timelineId, request.sessionId, priv.redisClient).then((timeline)=>{
 
 		if (timeline){
-			// console.log("handleTimelineSubscriptionREQ() retrieved timeline: ", timeline.serialise());
+			logger.debug("handleTimelineSubscriptionREQ() retrieved timeline: ", timeline.serialise());
 			mytimeline = timeline;
 
-			sendTimelineSubscriptionResponse.call(self, request, 0, mytimeline.channel);
+			sendTimelineSubscriptionResponse.call(self, request, 0, mytimeline);
 		}else
 		{
 			sendTimelineSubscriptionResponse.call(self, request, 1);
@@ -888,11 +888,11 @@ function handleTimelineSubscriptionREQ (request) {
 
 // ---------------------------------------------------------
 
-function sendTimelineSubscriptionResponse (request, responseCode, providerChannel, PresentationTimestamp) {
+function sendTimelineSubscriptionResponse (request, responseCode, timeline) {
 	var self = this;
 	// console.log("sendTimelineSubscriptionResponse() providerChannel: ", providerChannel);
 
-	var response = new MessageFactory.TimelineSubscriptionRESP(request.sessionId, responseCode, providerChannel, PresentationTimestamp, request.id, request.version);
+	var response = new MessageFactory.TimelineSubscriptionRESP(request.sessionId, responseCode, timeline, request.id, request.version);
 
 	sendResponse.call(self, response, request.responseChannel);
 }
@@ -908,7 +908,9 @@ function requestDeviceForTimelineUpdates(device, timeline)
 		
 		var request = new MessageFactory.TimelineUpdateREQ(device.sessionId, "cloud-sync", kSessionRESPTopic, timeline.id, timeline.timelineType, timeline.contentId);
 
-		var priv = PRIVATE.get(this);
+		var priv = PRIVATE.get(self);
+
+		// var reqbytes = request.serialise();
 		
 		priv.messenger.sendRequest(request, device.requestChannel, handleTimelineUpdateResponse.bind(self, resolve, reject), {});
 		
@@ -965,7 +967,7 @@ function handleUnexpectedDeviceExit(message)
 		logger.info("Device ", message.senderId, " deleted from", message.sessionId, ": ", result);
 
 		var m = new MessageFactory.DeviceStatus(message.sessionId, message.senderId, message.senderId, "offline");
-		logger.debug("handleUnexpectedDeviceExit() - SessionController sent:" , JSON.stringify(m) ,  " to '", deviceStatusTopic, "'");
+		logger.debug("handleUnexpectedDeviceExit() - SessionController sent:" , messageTypeAsString(m) ,  " to '", deviceStatusTopic, "'");
 
 		priv.messenger.send(m, deviceStatusTopic);
 		
@@ -1011,7 +1013,15 @@ function sendResponse (response, responseChannel) {
 	// console.log("---------------");
 	
 	priv.messenger.send(response, responseChannel);
-	logger.debug("response sent: '" , response.id, "' to channel " , responseChannel);
+	logger.debug(messageTypeAsString(response), " '" , response.id, "' sent to channel " , responseChannel);
+}
+
+
+function messageTypeAsString(msg)
+{
+	var msgTypeNames = Object.getOwnPropertyNames(MessageFactory.MessageType);
+
+	return msgTypeNames[msg.messageType];
 }
 	
 // --------------------------------------------------
