@@ -1,1 +1,1 @@
-module.exports = { hostname: "192.168.1.70", port:9001};
+module.exports = { hostname: "192.168.1.152", port:9001};
