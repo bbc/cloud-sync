@@ -8,7 +8,13 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
+
 import redis.clients.jedis.Jedis;
+import uk.co.bbc.rd.cloudsync.CloudSyncMessages.TimelineUpdate;
+import uk.co.bbc.rd.cloudsync.CloudSyncMessages.Timestamp;
+import uk.co.bbc.rd.cloudsync.CloudSyncPacket.Header;
 
 public class TimelineObservation extends Observation{
 
@@ -52,7 +58,34 @@ public class TimelineObservation extends Observation{
 		this.earliest = earliest;
 		this.latest = latest;
 	}
-
+	
+	public static TimelineObservation getInstance(Header header, ByteString timelineUpdateMsg)
+	{
+		TimelineObservation instance = new TimelineObservation();
+		
+		try {
+			TimelineUpdate timelineupdate = TimelineUpdate.parseFrom(timelineUpdateMsg);
+			instance.sessionId = header.getSessionID();
+			instance.contentId = timelineupdate.getContentID();
+			instance.timelineId = timelineupdate.getTimelineID();
+			instance.timelineType = timelineupdate.getTimelineType();
+			instance.sourceId = header.getSenderID();
+			
+			// get PresentationTimestamp from protobuf message.
+			uk.co.bbc.rd.cloudsync.CloudSyncMessages.PresentationTimestamp protoPTS = timelineupdate.getPresentationTimestamp();
+			
+			instance.actual = PresentationTimestamp.getInstance( protoPTS.getActual());
+			instance.earliest = PresentationTimestamp.getInstance(protoPTS.getEarliest());
+			instance.latest = PresentationTimestamp.getInstance(protoPTS.getLatest());
+			
+			return instance;
+			
+		} catch (InvalidProtocolBufferException e) {
+			
+			e.printStackTrace();
+			return null;
+		}
+	}
 
 
 	public static TimelineObservation getInstance(String obsJSON)

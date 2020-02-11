@@ -14,9 +14,12 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttSecurityException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
+import uk.co.bbc.rd.cloudsync.CloudSyncPacket.Header;
+import uk.co.bbc.rd.cloudsync.CloudSyncPacket.MessageType;
+import uk.co.bbc.rd.cloudsync.CloudSyncPacket.Packet;;
 
 
 
@@ -44,7 +47,7 @@ public class ObservationReader implements MqttCallback, Runnable{
 			Logger.getLogger(ObservationReader.class.getName());
 	
 	
-	private JSONParser jsonParser;
+	
 	
 	private String mqttClientId;
 
@@ -55,7 +58,7 @@ public class ObservationReader implements MqttCallback, Runnable{
 		this.brokerAddr = sourceAddr;
 		this.qos = 0;
 		this.jobList = observationsQ;
-		this.jsonParser =  new JSONParser();
+		
 
 	}
 
@@ -89,26 +92,40 @@ public class ObservationReader implements MqttCallback, Runnable{
 
 	public void messageArrived(String topic, MqttMessage message) throws Exception {
 
-		String msg =  new String(message.getPayload());
-
-//		logger.info("ObservationReader received message: " + msg + " on topic:"+ topic);
-
-		
+		logger.info("ObservationReader received timelineupdate message on topic:"+ topic);
 		try {
-			Object obj = jsonParser.parse(msg);
-			JSONObject jsonObject = (JSONObject) obj;
-
-			String msgType = (String) jsonObject.get("type");
-
-			if (msgType.equalsIgnoreCase("TimelineUpdate"))
+			Packet cloudsyncpacket = Packet.parseFrom(message.getPayload());
+			
+			Header header = cloudsyncpacket.getHeader();
+			
+			if (header.getMsgType() == MessageType.TIMELINE_UPDATE)
 			{
-				TimelineObservation timelineUpdate = TimelineObservation.getInstance(jsonObject);
+				ByteString packetPayload = cloudsyncpacket.getPayload(); 
+				TimelineObservation timelineUpdate = TimelineObservation.getInstance(header, packetPayload);
 				this.jobList.put(timelineUpdate);
 			}
-
-		} catch (ParseException e) {
-			logger.info("error parsing message: " + msg);
+		}catch(InvalidProtocolBufferException e)
+		{
+			logger.info("error parsing message: " + message.getId());
 		}
+		
+		
+//		try {
+//			Object obj = jsonParser.parse(msg);
+//			JSONObject jsonObject = (JSONObject) obj;
+//
+//			String msgType = (String) jsonObject.get("type");
+//
+//			if (msgType.equalsIgnoreCase("TimelineUpdate"))
+//			{
+//				TimelineObservation timelineUpdate = TimelineObservation.getInstance(jsonObject);
+//				this.jobList.put(timelineUpdate);
+//			}
+//
+//		} 
+//		catch (ParseException e) {
+//			logger.info("error parsing message: " + msg);
+//		}
 	}
 
 

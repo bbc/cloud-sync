@@ -2,6 +2,8 @@ package uk.co.bbc.rd.TimelineObserver;
 
 import org.json.simple.JSONObject;
 
+import uk.co.bbc.rd.cloudsync.CloudSyncMessages.Timestamp;
+
 class PresentationTimestamp{
 
 	private double contentTime;
@@ -19,6 +21,19 @@ class PresentationTimestamp{
 		this.contentTime = contentTime2;
 		this.wallClockTime = wallClockTime2;
 		this.speed = speed;
+	}
+	
+	public static PresentationTimestamp getInstance(Timestamp protoTimestamp) {
+		
+		if (protoTimestamp == null)
+		{
+			return null;
+		}
+		
+		PresentationTimestamp instance = new PresentationTimestamp(protoTimestamp.getContentTime(),
+				protoTimestamp.getWallclockTime(), protoTimestamp.getSpeed());
+		
+		return instance;
 	}
 
 	public static PresentationTimestamp getInstance(JSONObject jsonObj)
@@ -118,5 +133,7 @@ class PresentationTimestamp{
 				+ " \"speed\":" + this.speed
 				+ "}";
 	}
+
+
 
 }
