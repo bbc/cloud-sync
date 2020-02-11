@@ -29,6 +29,7 @@ $(OBJ_DIR)%.o: $(x)/%.cpp
 
 proto:
 	protoc --proto_path=./ --js_out=import_style=commonjs,binary:./ CloudSyncMessage.proto  CloudSyncPacket.proto
+	protoc --proto_path=./ --java_out=../../timelineobserver/TimelineObserver/src/main/java/ CloudSyncMessage.proto  CloudSyncPacket.proto
 	
 clean:
 	$(RM) ${COBJS}
