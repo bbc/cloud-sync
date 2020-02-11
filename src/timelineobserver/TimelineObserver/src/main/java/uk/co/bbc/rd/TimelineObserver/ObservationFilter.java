@@ -148,7 +148,7 @@ public class ObservationFilter implements Runnable {
 	{
 		String timelineKey = "session:" + tObs.sessionId + ":timeline:" + tObs.timelineId;
 		double TLRate = 0;
-		double WCRate = 1e3;
+		double WCRate = 1e9;
 		
 		// get timeline frequency
 		List<String> fieldValues = jedis.hmget(timelineKey, "frequency");
@@ -164,7 +164,7 @@ public class ObservationFilter implements Runnable {
 		// determine if new timeline observation is a new change
 		PresentationTimestamp prevObsTimestamp = TimelineObservation.getActualTimestampFromDB(tObs.sessionId, tObs.timelineId, this.jedis);
 		
-//		logger.info("Thread " + Thread.currentThread().getId() + " - processTimelineObservation(): timeline lastTimestamp from DB: " + prevObsTimestamp);
+		logger.info("Thread " + Thread.currentThread().getId() + " - processTimelineObservation(): timeline lastTimestamp from DB: " + prevObsTimestamp);
 
 		if (prevObsTimestamp == null)
 		{
@@ -326,8 +326,8 @@ public class ObservationFilter implements Runnable {
 			return true;
 
 //		// use old timestamp to calculate predicted timestamp
-//		logger.info("oldTimestamp: " + oldTimestamp.toString());
-//		logger.info("newTimestamp: " + newTimestamp.toString());
+		logger.info("oldTimestamp: " + oldTimestamp.toString());
+		logger.info("newTimestamp: " + newTimestamp.toString());
 //
 //
 //		double r = (oldTimestamp.getSpeed() * timelineTickRate)/wcTickRate;
@@ -338,13 +338,15 @@ public class ObservationFilter implements Runnable {
 
 
 		double expectedContentTime = oldTimestamp.getSpeed() * (newTimestamp.getWallClockTime() - oldTimestamp.getWallClockTime()) * timelineTickRate / wcTickRate + oldTimestamp.getContentTime();
-//		logger.info( "expected content time : " +  expectedContentTime);
-//		logger.info( "actual content time : " +  newTimestamp.getContentTime());
+		logger.info( "expected content time : " +  expectedContentTime);
+		logger.info( "actual content time : " +  newTimestamp.getContentTime());
+		
+		double diffInSecs = (newTimestamp.getContentTime()- expectedContentTime)/timelineTickRate;
+		double diffInMs = diffInSecs * 1000;
+		
+		logger.info("Thread " + Thread.currentThread().getId() + " - Timeline: " + timelineId +" change : " + diffInMs + "ms");
 
-
-		logger.info("Thread " + Thread.currentThread().getId() + " - Timeline: " + timelineId +" change : " + (newTimestamp.getContentTime() - expectedContentTime) + " ms");
-
-		if (Math.abs(newTimestamp.getContentTime()- expectedContentTime) > thresholdMs)
+		if (Math.abs(diffInMs) > thresholdMs)
 			return true;
 
 
