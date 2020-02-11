@@ -1,5 +1,8 @@
 syntax = "proto3";
 
+option java_package = "uk.co.bbc.rd.cloudsync";
+option java_outer_classname = "CloudSyncMessages";
+
 package CloudSyncMessages;
 
 // Sub messages

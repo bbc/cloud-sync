@@ -1,6 +1,10 @@
 syntax = "proto3";
 
+option java_package = "uk.co.bbc.rd.cloudsync";
+option java_outer_classname = "CloudSyncPacket";
+
 package CloudSyncMessages;
+
 
 enum MessageType {
     JOIN_REQ                    = 0;
