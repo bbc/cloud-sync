@@ -595,7 +595,7 @@ function electSyncTL(session, source, type)
 				return sendSyncTimelinesAvailable.call(self, session);
 
 			}else if (!syncTLChanged && syncTL === null){
-				return sendSyncTimelinesAvailable.call(self, session);
+				return true;
 			}
 			else if (syncTLChanged && syncTL === null){
 				return sendSyncTimelinesAvailable.call(self, session);
