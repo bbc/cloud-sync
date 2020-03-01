@@ -75,7 +75,7 @@ services:
     ports:
       - "4000:4000"
       - "5858:5858"
-    command: npm run debug
+    command: npm start
     volumes:
       - ./src/sessioncontroller:/usr/src/sessioncontroller
       - ./src/sessioncontroller/src:/usr/src/sessioncontroller/src
@@ -99,8 +99,8 @@ services:
     image: synccontroller
     ports:
       - "3002:3002"
-      - "5859:5859"
-    command: npm run debug
+      - "5855:5855"
+    command: npm start
     volumes:
       - ./src/synccontroller:/usr/src/synccontroller
       - ./src/synccontroller/src:/usr/src/synccontroller/src
