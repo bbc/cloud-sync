@@ -69,8 +69,10 @@ public class TimelineObserver
 	private JedisPool jedisPool;
 	
 	private String servicesHost;
-//redis-smq-default|@1.1|cloudsync_synccontroller_waitqueue
-	private final static String SYNC_CONTROLLER_WAITQUEUE = "redis-smq-default|@1.1|cloudsync_synccontroller_waitQueue";
+
+	private final static String SYNC_CONTROLLER_WAITQUEUE = "redis-smq-default-ns|@1.1|cloudsync_synccontroller_waitQueue";
+	//redis-smq-default-ns|@1.1|cloudsync_synccontroller_waitQueue
+	// "redis-smq-default|@1.1|cloudsync_synccontroller_waitQueue"
 	
 	private final static int NUM_WRITER_THREADS= 5;
 
