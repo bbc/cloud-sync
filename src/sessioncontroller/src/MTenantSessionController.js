@@ -909,26 +909,9 @@ function requestDeviceForTimelineUpdates(device, timeline)
 		var request = new MessageFactory.TimelineUpdateREQ(device.sessionId, "cloud-sync", kSessionRESPTopic, timeline.id, timeline.timelineType, timeline.contentId);
 
 		var priv = PRIVATE.get(self);
-
-		// var reqbytes = request.serialise();
-		
-		priv.messenger.sendRequest(request, device.requestChannel, handleTimelineUpdateResponse.bind(self, resolve, reject), {});
-		
-		//sendRequest (type, sessionId, contextId, senderId, replyChannel, destinationChannel, onresponse, options) 
-		// sendRequest.call(self,
-		// 	"TimelineUpdateREQ", // type
-		// 	device.sessionId, // sessionId
-		// 	device.contextId, // contextId
-		// 	device.sessionId, // senderId			
-		// 	kSessionRESPTopic, // replychannel
-		// 	device.requestChannel, // destinationChannel
-		// 	handleTimelineUpdateResponse.bind(self, resolve, reject), 
-		// 	{},
-		// 	timeline.id,
-		// 	timeline.timelineType,
-		// 	timeline.contentId
-		// );
+		priv.messenger.send(request, device.requestChannel);
 		logger.debug("Sent 'TimelineUpdateREQ' to topic " , device.requestChannel);
+		resolve(0);
 	});
 
 }
@@ -938,15 +921,17 @@ function requestDeviceForTimelineUpdates(device, timeline)
 function handleTimelineUpdateResponse (resolve, reject, response) {
 	// var priv = PRIVATE.get(this);
 	// console.log(response);
+
 	logger.debug("Received timelineUpdateRESP.");
-	
-	if (response.responseCode === 0) {
-		resolve(0); 
+	resolve(0); 
+	// if (response.responseCode === 0) {
+	// 	resolve(0); 
 			
-	} else {
-		logger.error("requestDeviceForTimelineUpdates:", response);
-		reject();
-	}
+	// } else {
+	// 	//logger.error("requestDeviceForTimelineUpdates:", response);
+	// 	//reject();
+	// 	resolve(0); 
+	// }
 }
 
 
