@@ -1950,6 +1950,7 @@ class TimelineUpdateRESP extends Message
 		let pbRESP = proto.CloudSyncMessages.TimelineUpdateRESP.deserializeBinary(payload);
 		
 		return new TimelineUpdateRESP(header.getSessionid(),
+							header.getSenderid(),
 							header.getResponsecode(),
 							pbRESP.getTimelineid(),
 							header.getMessageid(),
