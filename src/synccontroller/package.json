@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node ./src/main.js -c http://consul:8500 -l development",
-    "debug": "nodemon --legacy-watch --watch ./src --inspect=0.0.0.0:5859 --nolazy ./src/main.js -c http://consul:8500 -l development"
+    "debug": "nodemon --legacy-watch --watch ./src --inspect=0.0.0.0:5855 --nolazy ./src/main.js -c http://consul:8500 -l development"
   },
   "author": {
     "name": "Rajiv Ramdhany",
@@ -21,14 +21,13 @@
     "command-line-args": "^4.0.6",
     "consul": "^0.29.0",
     "dvbcss-clocks": "^0.0.4",
-    "events": "^1.1.1",
     "google-protobuf": "^3.8.0",
     "inherits": "^2.0.1",
     "lodash": "^4.6.1",
     "mdn-polyfills": "^3.6.0",
     "redis": "^2.8.0",
     "redis-connection": "^5.4.0",
-    "redis-smq": "^1.0.17",
+    "redis-smq": "^1.0.20",
     "url": "^0.11.0",
     "uuid": "^3.2.1",
     "weak-map": "^1.0.5",
