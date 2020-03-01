@@ -38,7 +38,7 @@ COPY synccontroller/package.json /usr/src/synccontroller/
 RUN npm install
 RUN grunt build_lib
 
-EXPOSE 3002 5859
+EXPOSE 3002 5855
 
 CMD [ "npm", "start" ]
 
