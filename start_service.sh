@@ -64,5 +64,5 @@ echo "writing config file $PWD/examples/synchronisedvideo/src/js/config.js"
 echo "module.exports = { hostname: \"${myArray[0]}\", port:9001};" > $PWD/examples/synchronisedvideo/src/js/config.js
 echo "calling docker-compose up"
 grunt build_lib
-docker-compose up --scale synccontroller=1
+docker-compose up --scale synccontroller=2
 
