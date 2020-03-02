@@ -99,7 +99,7 @@ services:
     image: synccontroller
     ports:
       - "3002"
-      - "5855"
+      # - "5855"
     command: npm start
     volumes:
       - ./src/synccontroller:/usr/src/synccontroller
