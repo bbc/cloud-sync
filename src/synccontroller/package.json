@@ -8,7 +8,9 @@
   },
   "scripts": {
     "test": "grunt build_test",
-    "prepare": "grunt build_lib"
+    "prepare": "grunt build_lib",
+    "start": "node ./src/main.js -c http://consul:8500 -l development",
+    "debug": "nodemon --legacy-watch --watch ./src --inspect=0.0.0.0:5855 --nolazy ./src/main.js -c http://consul:8500 -l development"
   },
   "author": {
     "name": "Rajiv Ramdhany",
@@ -27,7 +29,7 @@
     "mdn-polyfills": "^3.6.0",
     "redis": "^2.8.0",
     "redis-connection": "^5.4.0",
-    "redis-smq": "^1.0.17",
+    "redis-smq": "^1.0.20",
     "url": "^0.11.0",
     "uuid": "^3.2.1",
     "weak-map": "^1.0.5",
