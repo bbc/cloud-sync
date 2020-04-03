@@ -20,7 +20,7 @@
 // ---------------------------------------------------------
 var commandLineArgs = require("command-line-args");
 var SessionController = require("./MTenantSessionController");
-const Logger = require("../../common/logger/logger");
+const Logger = require("./logger");
 const url = require("url");
 
 
@@ -157,7 +157,7 @@ function discoverService(serviceName)
 // ---------------------------------------------------------
 //  Start controller
 // ---------------------------------------------------------
-
+var logger;
 var optionDefinitions = [
 	{ name: "keepalive", alias: "k", type: Number, defaultValue: 10000 },
 	{ name: "consul", alias: "c", type: String },
@@ -167,7 +167,7 @@ var optionDefinitions = [
 
 try {
 	var options = commandLineArgs(optionDefinitions);
-	var logger = Logger.getNewInstance(options.loglevel);
+	logger = Logger.getNewInstance(options.loglevel, "sessioncontroller");
 
 	// config
 	config.consulURL = options.consul;
