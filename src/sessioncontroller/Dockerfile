@@ -37,7 +37,7 @@ COPY sessioncontroller/package.json /usr/src/sessioncontroller/
 RUN npm install
 RUN grunt build_lib
 
-EXPOSE 4000
+EXPOSE 4002
 
-ENTRYPOINT ["node","src/main.js"]
+CMD [ "npm", "start" ]
 
