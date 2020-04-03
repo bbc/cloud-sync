@@ -94,7 +94,7 @@ class SyncController extends Consumer
 		
 		this.id = uuidv4();
 		this.queueName = config.SyncControllerQueueName;		
-		logger = Logger.getNewInstance(process.env.loglevel);		
+		logger = Logger.getNewInstance(process.env.loglevel, "synccontroller");		
 
 		priv.redisClient = RedisConnection("DEFAULT", priv.redis);
 		priv.redisClient.on("error", function (err) {

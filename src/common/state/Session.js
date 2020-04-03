@@ -3,7 +3,7 @@
 /* DESCRIPTION:         class for a synchronisation session                 */
 /* VERSION:             (see git)                                       	*/
 /* DATE:                (see git)                                       	*/
-/* AUTHOR:              Rajiv Ramdhany <jonathan.rennison@bt.com>    	*/
+/* AUTHOR:              Rajiv Ramdhany <rajiv.ramdhany@bbc.co.uk>  		  	*/
 
 /* Copyright 2015 British Broadcasting Corporation							*/
 
@@ -27,6 +27,9 @@ var Logger = require("../logger/logger");
 
 var PRIVATE = new WeakMap();
 var logger = Logger.getNewInstance();
+
+
+const SESSIONS_LIST_KEY = "cloud_sync_sessions";
 
 /**
  * @class Session
@@ -77,8 +80,12 @@ class Session
 		this.channel = "Sessions/" + sessionId + "/state";
 
 		// save session to datastore after creation
-		if (persist) this.persist(priv.ds);
-
+		if (persist) 
+		{
+			this.persist(priv.ds);
+			var sessionsList = list(SESSIONS_LIST_KEY, priv.ds);
+			sessionsList.insert(this, null, false);
+		}	
 	}
 
 	// --------------------------------------------------------------------------
@@ -168,7 +175,7 @@ class Session
 				}
 				// remove all devices
 				return session.cleanUp(ds);
-			}).then(()=>{
+			}).then((result)=>{
 				resolve(true);	
 			}).catch((err) =>{reject(err);});
 		});		
@@ -1270,6 +1277,7 @@ class Session
 	{
 		var self =this;
 		var priv = PRIVATE.get(this);
+
 		return new Promise((resolve, reject)=>{
 
 			// remove registered devices
@@ -1282,8 +1290,11 @@ class Session
 				})
 				.then(()=>{
 					return self.removeAllDevices();
-				})
-				.then(()=>{
+				}).then(()=>{
+					var sessionsList = list(SESSIONS_LIST_KEY, priv.ds);
+					return sessionsList.del(Session.storageKey(self.id), null, false);
+				}).then((result)=>{
+					// console.log("SessionsList DEL: " + result);
 					priv.ds.del(priv.key);
 					resolve(true);
 				})

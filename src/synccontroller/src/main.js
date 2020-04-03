@@ -181,10 +181,11 @@ var optionDefinitions = [
 	{ name: "consul", alias: "c", type: String },
 	{ name: "loglevel", alias: "l", type: String, defaultValue: "development" }
 ];
+var logger;
 
 try {
 	var options = commandLineArgs(optionDefinitions);
-	var logger = Logger.getNewInstance(options.loglevel);
+	logger = Logger.getNewInstance(options.loglevel, "synccontroller");
 
 	// config
 	config.consulURL = options.consul;

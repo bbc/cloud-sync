@@ -40,5 +40,5 @@ RUN grunt build_lib
 
 EXPOSE 3002
 
-ENTRYPOINT ["node","src/main.js"]
+CMD [ "npm", "start" ]
 

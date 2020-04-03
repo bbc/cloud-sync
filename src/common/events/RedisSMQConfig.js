@@ -1,7 +1,6 @@
 
 /****************************************************************************
- * Copyright 2017 Institut für Rundfunktechnik
- * and contributions Copyright 2017 British Broadcasting Corporation.
+ * Copyright 2017 British Broadcasting Corporation.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * --------------------------------------------------------------------------
- * Summary of parts containing contributions
- *   by British Broadcasting Corporation (BBC):
- *     ControlTimestamp.prototype.toJson
+
 *****************************************************************************/
 
 

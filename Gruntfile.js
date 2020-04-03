@@ -260,23 +260,24 @@ module.exports = function(grunt) {
             src: ['./src/documentation/**/*.compdiag'],
             dest: './doc/component_diagrams'
         }
-    },
+    }
+    //,
 
     // Typescript: JavaScript transpiler
     // (https://www.npmjs.com/package/grunt-ts)
-    ts: {
-        // Transile browser libs to ES3 (for legacy HbbTV devices)
-        hbbtv1: {
-            src: ['dist/tmp/browser/main.es3.js'],
-            dest: 'dist/browser/main.es3.js',
-            options: {
-                module: 'system', //or commonjs
-                target: 'es3',
-                allowJs: true,
-                removeComments: true
-            }
-        }
-    }
+    // ts: {
+    //     // Transile browser libs to ES3 (for legacy HbbTV devices)
+    //     hbbtv1: {
+    //         src: ['dist/tmp/browser/main.es3.js'],
+    //         dest: 'dist/browser/main.es3.js',
+    //         options: {
+    //             module: 'system', //or commonjs
+    //             target: 'es3',
+    //             allowJs: true,
+    //             removeComments: true
+    //         }
+    //     }
+    // }
     // TODO Transpile test builds and run tests with transpiled code
 
   });
@@ -296,7 +297,7 @@ module.exports = function(grunt) {
   grunt.registerTask('test', ['build_tests', 'watch:tests']);
 
   grunt.registerTask('build_tests', ['build_lib', 'clean:tests', 'webpack:specs', 'jasmine:tests']);
-  grunt.registerTask('build_lib', ['clean:dist', 'clean:build', 'webpack:messageFactoryNode', "webpack:messengerNode", 'webpack:lib_browser', 'webpack:lib_browser2', 'webpack:lib_browserES3', 'webpack:lib_node', "ts", "clean:tmp" ]);
+  grunt.registerTask('build_lib', ['clean:dist', 'clean:build', 'webpack:messageFactoryNode', "webpack:messengerNode", 'webpack:lib_browser', 'webpack:lib_browser2', 'webpack:lib_browserES3', 'webpack:lib_node', "clean:tmp" ]);
   grunt.registerTask("doc", [ "jsdoc", "md", "plantuml" ]);
 
 };

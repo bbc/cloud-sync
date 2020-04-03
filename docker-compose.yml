@@ -73,10 +73,12 @@ services:
       dockerfile: sessioncontroller/Dockerfile
     image: sessioncontroller
     ports:
-      - "4000:4000"
-    command: -c http://consul:8500 -l development
+      - 4002:4002
+    command: npm start
     volumes:
       - ./src/sessioncontroller/src:/usr/src/sessioncontroller/src
+      - ./src/sessioncontroller/log:/usr/src/sessioncontroller/log
+
     depends_on:
       - registrator
       - mqttbroker
@@ -97,9 +99,10 @@ services:
     image: synccontroller
     ports:
       - "3002"
-    command: -c http://consul:8500 -l development
+    command: npm start
     volumes:
       - ./src/synccontroller/src:/usr/src/synccontroller/src
+      - ./src/synccontroller/log:/usr/src/synccontroller/log
     depends_on:
       - registrator
       - mqttbroker
@@ -113,6 +116,32 @@ services:
       2immerse:
         aliases:
           - synccontroller.service.consul
+  
+  statscontroller:
+    build:
+      context: ./src
+      dockerfile: statscontroller/Dockerfile
+    image: statscontroller
+    ports:
+      - 4001:4001
+      - 5855:5855
+    command: npm run debug
+    volumes:
+      - ./src/statscontroller/src:/usr/src/statscontroller/src
+      - ./src/statscontroller/log:/usr/src/statscontroller/log
+    depends_on:
+      - registrator
+      - mqttbroker
+      - wallclockservice
+      - redis
+    labels:
+      - "SERVICE_NAME=statscontroller"
+    environment:
+        WALLCLOCK_SERVICE_WS_URL: wss://wallclock-service.virt.ch.bbc.co.uk
+    networks:
+      2immerse:
+        aliases:
+          - statscontroller.service.consul
 
   timelineobserver:
     build: src/timelineobserver/TimelineObserver/
