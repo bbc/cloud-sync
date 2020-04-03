@@ -27,10 +27,10 @@ var RedisSMQConfig = require("../../common/events/RedisSMQConfig");
 const Timeline = require("../../common/state/Timeline");
 const Device = require("../../common/state/Device");
 const Session = require("../../common/state/Session");
-const Logger = require("../../common/logger/logger");
+const Logger = require("./logger");
 const uuidv4 = require("uuid/v4");
 const Producer = require("redis-smq").Producer;
-const Monitor = require("redis-smq").monitor;
+const {monitor} = require("redis-smq");
 
 var SyncEvents = require("../../common/events/syncevents_pb");
 
@@ -80,7 +80,7 @@ class MTenantSessionController{
 		priv.onBoardingChannel = kOnboardingChannel;
 		priv.channels = [kOnboardingChannel]; // channels this session controller is subscribed to
 
-		logger = Logger.getNewInstance(process.env.loglevel);
+		logger = Logger.getNewInstance(process.env.loglevel, "sessioncontroller");
 	}
 
 	// ---------------------------------------------------------
@@ -140,14 +140,14 @@ function setupSessionController() {
 	logger.info("connected to redis.");
 
 	// setup redis-smq producer
-	priv.redissmqConfig = new RedisSMQConfig(priv.redis.host, priv.redis.port, "127.0.0.1", 4000);
+	priv.redissmqConfig = new RedisSMQConfig(priv.redis.host, priv.redis.port, "0.0.0.0", 4002);
 	logger.debug("Reliable queue config: ", JSON.stringify(priv.redissmqConfig.getConfig()));
 	priv.syncCrtlQProducer = new Producer(kSyncControllerQueueKey, priv.redissmqConfig.getConfig()); 
 
-	priv.syncCrtlQMonitor = new Monitor(priv.redissmqConfig.getConfig());
+	// priv.syncCrtlQMonitor = new Monitor(priv.redissmqConfig.getConfig());
 
-	priv.syncCrtlQMonitor.listen(()=>{
-		logger.info("SyncController Queue monitor running on port 4000");
+	monitor(priv.redissmqConfig.getConfig()).listen(()=>{
+		logger.info("SyncController Queue monitor running on port 4002");
 	});
 
 
