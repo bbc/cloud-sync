@@ -77,8 +77,8 @@ services:
       # - "5858:5858"
     command: npm start
     volumes:
-      - ./src/sessioncontroller:/usr/src/sessioncontroller
       - ./src/sessioncontroller/src:/usr/src/sessioncontroller/src
+      - ./src/sessioncontroller/log:/usr/src/sessioncontroller/log
     depends_on:
       - registrator
       - mqttbroker
@@ -102,8 +102,8 @@ services:
       # - "5855"
     command: npm start
     volumes:
-      - ./src/synccontroller:/usr/src/synccontroller
       - ./src/synccontroller/src:/usr/src/synccontroller/src
+      - ./src/synccontroller/log:/usr/src/synccontroller/log
       
     depends_on:
       - registrator
