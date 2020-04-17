@@ -124,8 +124,8 @@ services:
     image: statscontroller
     ports:
       - 4001:4001
-      - 5855:5855
-    command: npm run debug
+      #- 5855:5855
+    command: npm start
     volumes:
       - ./src/statscontroller/src:/usr/src/statscontroller/src
       - ./src/statscontroller/log:/usr/src/statscontroller/log
