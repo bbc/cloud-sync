@@ -32,7 +32,7 @@ const Consumer = redisSMQ.Consumer;
 const uuidv4 = require("uuid/v4");
 const osutils = require("os-utils");
 
-const cpuUsage = promis
+// const cpuUsage = promis
 
 
 var PRIVATE = new WeakMap();
