@@ -26,7 +26,13 @@ const url = require("url");
 const express = require("express");
 const app = express();
 
-
+const basicAuth = require('express-basic-auth');
+ 
+app.use(basicAuth({
+	users: { 'cloudsync': 'supersecret' },
+	challenge: true,
+    realm: 'Imb4T3st4pp'
+}));
 
 
 
