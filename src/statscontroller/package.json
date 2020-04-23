@@ -25,6 +25,7 @@
     "consul": "^0.29.0",
     "events": "^1.1.1",
     "express": "^4.16.2",
+    "express-basic-auth": "^1.2.0",
     "inherits": "^2.0.1",
     "mdn-polyfills": "^3.6.0",
     "mqtt": "^2.13.1",
