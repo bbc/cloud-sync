@@ -1,1 +1,1 @@
-module.exports = { hostname: "192.168.1.71", port:9001};
+module.exports = { hostname: "render-sync.rd.api.bbc.co.uk"};

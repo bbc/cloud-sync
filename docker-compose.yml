@@ -5,7 +5,7 @@ services:
     image: gliderlabs/consul-server:latest
     command: "-server -bootstrap"
     ports:
-      - 8500:8500
+      - 80:8500
     networks:
       2immerse:
         aliases:
@@ -57,7 +57,7 @@ services:
     ports:
       - "6677:6677/udp"
       - "6676:6676"
-      - "80"
+      - "6675:80"
     labels:
       - "SERVICE_NAME=wallclock-service"
     depends_on:
@@ -86,7 +86,7 @@ services:
     labels:
       - "SERVICE_NAME=sessioncontroller"
     environment:
-        WALLCLOCK_SERVICE_WS_URL:  wss://wallclock-service.virt.ch.bbc.co.uk
+        WALLCLOCK_SERVICE_WS_URL:  wss://render-wallclock.rd.api.bbc.co.uk
     networks:
       2immerse:
         aliases:
@@ -111,7 +111,7 @@ services:
     labels:
       - "SERVICE_NAME=synccontroller"
     environment:
-        WALLCLOCK_SERVICE_WS_URL: wss://wallclock-service.virt.ch.bbc.co.uk
+        WALLCLOCK_SERVICE_WS_URL: wss://render-wallclock.rd.api.bbc.co.uk
     networks:
       2immerse:
         aliases:
@@ -137,7 +137,7 @@ services:
     labels:
       - "SERVICE_NAME=statscontroller"
     environment:
-        WALLCLOCK_SERVICE_WS_URL: wss://wallclock-service.virt.ch.bbc.co.uk
+        WALLCLOCK_SERVICE_WS_URL: wss://render-wallclock.rd.api.bbc.co.uk
     networks:
       2immerse:
         aliases:
