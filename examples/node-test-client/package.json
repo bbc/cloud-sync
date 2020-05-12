@@ -1,0 +1,38 @@
+{
+  "name": "cloudsynchroniser",
+  "version": "1.0.0",
+  "description": "Usage example of CloudSyncKit",
+  "main": "main.js",
+  "scripts": {
+    "debug": "node --nolazy --inspect-brk=9229 src/main.js -s 123234 -v",
+    "start": "node src/main.js -s 12342423",
+    "test": "echo \"no tests specified\""
+  },
+  "author": "Rajiv Ramdhany",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "grunt": "^1.0.1",
+    "grunt-contrib-clean": "^1.1.0",
+    "grunt-contrib-connect": "^1.0.2",
+    "grunt-contrib-copy": "^1.0.0",
+    "grunt-contrib-watch": "^1.0.0",
+    "grunt-webpack": "^3.0.2",
+    "webpack": "^3.7.1",
+    "webpack-dev-server": "^2.9.1"
+  },
+  "dependencies": {
+    "async": "^2.5.0",
+    "bluebird": "^3.5.1",
+    "body-parser": "^1.18.2",
+    "child-process-promise": "^2.2.1",
+    "child_process": "^1.0.2",
+    "command-line-args": "^4.0.6",
+    "command-line-usage": "^6.1.0",
+    "events": "^3.1.0",
+    "url": "^0.11.0",
+    "weak-map": "^1.0.5",
+    "winston": "^2.4.0",
+    "winston-daily-rotate-file": "^1.7.2",
+    "ws": "^7.3.0"
+  }
+}

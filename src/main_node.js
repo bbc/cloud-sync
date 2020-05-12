@@ -9,17 +9,18 @@
  */
 
 
-// var createSynchroniser = require("./client/Synchroniser");
+// var createSynchroniser = require("./client/CloudSyncKit");
 // var WallClockSynchroniser = require("./client/WallClockSynchroniser");
 //var MessageFactory = require("./common/message/MessageFactory");
 
 module.exports = {
-    // Synchroniser: {
-    //     createSynchroniser: createSynchroniser,
-    //     WallClockSynchroniser: WallClockSynchroniser,
-    // },
-    // Messages: {
-    //     MessageFactory : MessageFactory,
-    // }
+    
+    CloudSynchroniser: require("./client/CloudSynchroniser"),
+//     WallClockSynchroniser: WallClockSynchroniser,
+// },
+// Messages: {
+//     MessageFactory : MessageFactory,
+    SyncTLElection: require("./common/state/SyncTLElection")
+
 
 };
