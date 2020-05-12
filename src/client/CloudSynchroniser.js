@@ -49,6 +49,9 @@ var // Prototype inheritance
 
     // URL parser
     parseUrl = require("url-parse"),
+
+    WebSocket = require('ws'),
+    
     CloudSynchroniser;
 
 // Old versions of the "dvbcss-clocks" library have a incorrect
