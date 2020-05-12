@@ -103,7 +103,7 @@ module.exports = function(grunt) {
           filename: "Messenger.js",
           chunkFilename: "chunk-[name]-[chunkhash].js",
           library: 'Messenger',
-          libraryTarget: 'umd'
+          libraryTarget: 'commonjs2'
         },
         module: {
           loaders: []
