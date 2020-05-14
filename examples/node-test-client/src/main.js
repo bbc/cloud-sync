@@ -95,6 +95,7 @@ const optionDefinitions = [
     { name: "deviceid", alias: "d", type: String },
     { name: "role", alias: "r", type: String },
     { name: "syncmode", alias: "m", type: Number }, 
+    { name: "planfile", alias: "f", type: String }, 
     { name: "help", alias: "h", type: Boolean },
 	{ name: 'verbose', alias: 'v', type: Boolean, defaultValue: false },
 ];
@@ -254,7 +255,6 @@ try {
 //    }
 // }
 
-
 // function createVideoTimelineClock (contentId, timelineType, logger) {
 //     var videoElement = undefined;
 //     var videoCtrl = undefined;
@@ -269,6 +269,19 @@ try {
 //    }
 // }
 
+// function createVideoTimelineClock (contentId, timelineType, logger) {
+//     var videoElement = undefined;
+//     var videoCtrl = undefined;
+//     sessionInfo.contentId = contentId;
+//     sessionInfo.timelineType = timelineType;
+     
+//     if (videoClockObj === null) {
+//         videoClockObj = new VideoClock(synchroniser.wallclock, videoElement, videoCtrl);
+//         videoClockObj.on("change", function () {
+//             console.log("Video clock " + videoClockObj.id +" changed");
+//         });
+//    }
+// }
 
 
 
