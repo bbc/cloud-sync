@@ -4,8 +4,8 @@
   "description": "Usage example of CloudSyncKit",
   "main": "main.js",
   "scripts": {
-    "debug": "node --nolazy --inspect-brk=9229 src/main.js -s 123234 -v",
-    "start": "node src/main.js -s 12342423",
+    "debug": "node --nolazy --inspect-brk=9229 src/main.js -s 123234 -m 1 -f 'config/masterplan.json' -v",
+    "start": "node src/main.js -v -s 12342423 ",
     "test": "echo \"no tests specified\""
   },
   "author": "Rajiv Ramdhany",

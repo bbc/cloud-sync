@@ -1,0 +1,71 @@
+{
+	"deviceRole": "master",
+	"actions" : [
+		{
+		"name" : "connect",
+		"time_secs" : 1.0
+		},
+		{
+			"name" : "start_clock",
+			"time_secs" :4.0,
+			"params": {
+				"contentid" : "https://www.bbc.co.uk/iplayer/episode/m0009tt8",
+				"timelinetype": "tag:rd.bbc.co.uk,2015-12-08:dvb:css:timeline:simple-elapsed-time:1000"
+			}
+		},
+		{
+			"name" : "publish",
+			"time_secs" :10.0,
+			"params": {
+				"contentid" : "https://www.bbc.co.uk/iplayer/episode/m0009tt8",
+				"timelinetype": "tag:rd.bbc.co.uk,2015-12-08:dvb:css:timeline:simple-elapsed-time:1000"
+			}
+		},
+		{
+			"name" : "pause",
+			"time_secs" :15.0
+		},
+		{
+			"name" : "seek",
+			"time_secs" :18.0,
+			"params": {
+				"seek_pos" : 0
+			}
+		},
+		{
+			"name" : "send_msg",
+			"time_secs" :20.0
+		},
+		{
+			"name" : "play",
+			"time_secs" :45.0
+		},
+		{
+			"name" : "pause",
+			"time_secs" :150.0
+		},
+		{
+			"name" : "play",
+			"time_secs" :180.0
+		},
+		{
+			"name" : "send_msg",
+			"time_secs" :200.0
+		},
+		{
+			"name" : "seek",
+			"time_secs" :240.0,
+			"params": {
+				"seek_pos" : 0
+			}
+		},
+		{
+			"name" : "pause",
+			"time_secs" :360.0
+		},
+		{
+			"name" : "play",
+			"time_secs" :420.0
+		}
+	]
+}
