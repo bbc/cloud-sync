@@ -77,8 +77,14 @@ The resulting JS client library is placed in `dist/browser/Cloud-SyncKit.js`.
      Change the `WALLCLOCK_SERVICE_WS_URL` field values in `docker-compose.yml` to point to the correct endpoint for the WallClock service. The WallClock-Service websocket endpoint is exposed at `ws://<YOUR_MACHINE_IP>:6676`.
 
      You can change the port mappings from the containerised services to your host device here, if you have port collisions.
-  
-3. Build microservice images and instantiate containers using the **docker-compose** tool.
+
+3. If using influxdb to collect metrics, set `INFLUX_URL` and `INFLUX_TOKEN`:
+   ```
+   export INFLUX_URL="http://localhost:9999"
+   export INFLUX_TOKEN="<a secret token>"
+   ```
+
+4. Build microservice images and instantiate containers using the **docker-compose** tool.
 
     The `docker-compose.yml` YAML file specifies the microservices in the cloud-sync service:
     1. WallClock service

@@ -51,6 +51,23 @@ services:
         aliases:
           - redis.service.consul
 
+  telegraf:
+    image: telegraf
+    environment:
+      INFLUX_URL: "${INFLUX_URL}"
+      INFLUX_TOKEN: "${INFLUX_TOKEN}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./telegraf/cloud-sync.conf:/etc/telegraf/telegraf.conf:ro
+    depends_on:
+      - redis
+    labels:
+      - "SERVICE_NAME=telegraf"
+    networks:
+      2immerse:
+        aliases:
+          - telegraf.service.consul
+
   wallclockservice:
     build: ./wallclock-service
     image: wallclockservice
