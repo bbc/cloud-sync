@@ -83,7 +83,6 @@ services:
     depends_on:
       - registrator
       - mqttbroker
-      - wallclockservice
     labels:
       - "SERVICE_NAME=sessioncontroller"
     environment:
@@ -92,7 +91,7 @@ services:
       2immerse:
         aliases:
           - sessioncontroller.service.consul
-  
+
   synccontroller:
     build:
       context: ./src
@@ -107,7 +106,6 @@ services:
     depends_on:
       - registrator
       - mqttbroker
-      - wallclockservice
       - redis
     labels:
       - "SERVICE_NAME=synccontroller"
@@ -117,7 +115,7 @@ services:
       2immerse:
         aliases:
           - synccontroller.service.consul
-  
+
   statscontroller:
     build:
       context: ./src
@@ -133,7 +131,6 @@ services:
     depends_on:
       - registrator
       - mqttbroker
-      - wallclockservice
       - redis
     labels:
       - "SERVICE_NAME=statscontroller"
@@ -181,7 +178,7 @@ services:
         2immerse:
           aliases:
             - synchronisedvideo.service.consul
-  
+
 networks:
   2immerse:
      driver: bridge
