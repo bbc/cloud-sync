@@ -29,8 +29,6 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./telegraf/wallclock.conf:/etc/telegraf/telegraf.conf:ro
-    depends_on:
-      - redis
     labels:
       - "SERVICE_NAME=telegraf"
     networks:
