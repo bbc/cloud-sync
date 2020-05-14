@@ -3,21 +3,17 @@
 //  Declarations
 // ---------------------------------------------------------
 
-var Synchroniser, DeviceInfo, SessionInfo, Clocks, DisplayFactory,
-    csynchroniser, syncUrl, deviceInfo, sessionInfo, getUrlParameter,
-    videoClock, videoCtrl, videoTimelineType, commandLineArgs, logger, url, config;
+var commandLineArgs, logger, url, config, fs, ClientController, controller;
 
 
 
-Synchroniser = require("../../../dist/node/Synchroniser");
 commandLineArgs = require("command-line-args");
 const commandLineUsage = require("command-line-usage");
 Logger = require("./logger");
 url = require("url");
-Clocks = require("dvbcss-clocks");
-VideoSynchroniser = require("./VideoSynchroniser");
-VideoClock = require("./VideoClock");
-VideoController = require("./VideoController");
+fs = require('fs');
+ClientController = require("./ClientController");
+
 
 var config = {
     syncURL : undefined,
@@ -62,17 +58,31 @@ const sections = [
           },
           {
             name: 'deviceid',
-            description: 'An id for this client',
+            description: 'An id for this client. Optional.',
             alias: 'd',
             type: String,
             typeLabel: '{underline ID}'
           },
           {
             name: 'mode',
-            description: 'Sync mode. 1 - MASTER/SLAVE, 2 -DYNAMIC',
+            description: 'Sync mode. 1 - MASTER/SLAVE, 2 -DYNAMIC (default)',
             alias: 'm',
             type: Number,
             typeLabel: '{underline 1|2}'
+          },
+          {
+            name: 'role',
+            description: 'Specify role: master (m) or slave (s), if mode == 1',
+            alias: 'r',
+            type: String,
+            typeLabel: '{underline m|s}'
+          },
+          {
+            name: 'plan',
+            description: 'JSON file containing sequence of actions',
+            alias: 'f',
+            type: String,
+            typeLabel: '{underline file}'
           },
           {
             name: 'verbose',
@@ -89,7 +99,9 @@ const optionDefinitions = [
     { name: "syncurl", alias: "u", type: String },
     { name: "sessionid", alias: "s", type: String },
     { name: "deviceid", alias: "d", type: String },
+    { name: "role", alias: "r", type: String },
     { name: "syncmode", alias: "m", type: Number }, 
+    { name: "planfile", alias: "f", type: String }, 
     { name: "help", alias: "h", type: Boolean },
 	{ name: 'verbose', alias: 'v', type: Boolean, defaultValue: false },
 ];
@@ -102,61 +114,144 @@ try {
         console.log(usage);
     }else
     {
-
         options.loglevel = options.verbose ? "development" : "info";
         logger = Logger.getNewInstance(options.loglevel, "cloudsynctestclient");
-        config.syncURL = options.syncurl || "render-sync.rd.api.bbc.co.uk";
+        config.syncURL = options.syncurl || "cloudsync.virt.ch.bbc.co.uk";
         config.sessionId = options.sessionid;
         config.loglevel = options.loglevel;
         process.env.loglevel = options.loglevel;
         config.deviceId = options.deviceid || "csclient-" + uuidv4();
-        config.syncMode = options.syncMode || Synchroniser.SyncTLElection.EARLIEST_FIRST;
-    
-        logger.info("running node app with these params:");
-        console.log(config);
+        config.syncMode = options.syncmode || SynchroniserLib.SyncTLElection.DYNAMIC;
+        config.planfile = options.planfile || "config/auxplan.json";
+        config.plan = JSON.parse(fs.readFileSync(config.planfile, 'UTF-8'));
 
-
-        logger.debug("Call:  CloudSyncKit.getCloudSynchroniser()");
-        csynchroniser = new Synchroniser.CloudSynchroniser(
-            { hostname: config.syncURL},
-            config.sessionId,
-            "DEFAULT",
-            config.deviceId,
-            {
-                syncTimelineElection: config.syncMode
-            }      
-        );
-        
-        console.log(csynchroniser);
-
+        if ((typeof  config.plan === "undefined") || ( config.plan === null))
+        {
+            logger.error("Error loading test plan file. No plan to execute.");
+        }
+       
 
         
+        logger.info("running node app with these params: ");
+        console.log(config)
+
+        controller = new ClientController(config);
+        controller.start();
+        // CRTL-C handler
+		process.on("SIGINT", function() {
+			controller.stop();
+			process.exit();
+		});   
+       
     }
     
-     
-
-   
-    
-
-
-
-
 
 } catch (e) {
 	logger.error(e);
 }
+
+// ---------------------------------------------------------------
+
+
+// function handleDeviceRegistrationSuccess () {
+//     logger.info("Event:", "DeviceRegistrationSuccess");
+// }
+
+// function handleDeviceRegistrationError (e) {
+//     logger.error("DeviceRegistrationError" + e);
+// }
+
+// function handleWallClockAvailable () {
+//     logger.info("Event:", "WallClockAvailable");
+//     logger.info("Schedule video clocks creation.");
+//     scheduleStartClocks.call(this);
+//     scheduleAllOtherJobs();
+// }
+
+// function handleWallClockUnAvailable () {
+//     logger.error("Event:", "WallClockUnAvailable");
+// }
+
+// function handleSyncServiceUnavailable (e) {
+//     logger.error("SyncServiceUnavailable", e);
+// }
+
+
+// function handleSyncTimelinesAvailable (e) {
+//     logger.info("SyncTimelinesAvailable", e);
+// }
+
+// // ---------------------------------------------------------------
+
+// function getAvailableDevices () {
+//     logger.info("Call:  CloudSynchroniser.getAvailableDevices()");
+//     synchroniser.getAvailableDevices().
+//         catch (function (e) { logger.error(e) }).
+//     then (function (devices) { 
+//         sessionInfo.devices = devices;
+//     });
+// }
+
+// function connectToSyncService()
+// {
+//     synchroniser = new SynchroniserLib.CloudSynchroniser(
+//         { hostname: config.syncURL},
+//         config.sessionId,
+//         "DEFAULT",
+//         config.deviceId,
+//         {
+//             syncTimelineElection: config.syncMode
+//         }      
+//     );
+    
+//     synchroniser.on("DeviceRegistrationError", handleDeviceRegistrationError.bind(this));
+//     synchroniser.on("DeviceRegistrationSuccess", handleDeviceRegistrationSuccess.bind(this));
+//     synchroniser.on("WallClockUnAvailable", handleWallClockUnAvailable.bind(this));
+//     synchroniser.on("WallClockAvailable", handleWallClockAvailable.bind(this));
+//     synchroniser.on("SyncServiceUnavailable", handleSyncServiceUnavailable);
+//     synchroniser.on("SyncTimelinesAvailable", handleSyncTimelinesAvailable);
+// }
+   
+// function scheduleStartClocks()
+// {
+//    var self = this;
+//     for (const action of sessionInfo.plan.actions) {
+//        if (action.name === "start_clock")
+//        {
+//             setTimeout(createVideoTimelineClock.bind(self), action.time_secs * 1000, action.params["contentid"],  action.params["timelinetype"], logger);
+//        }
+//    }
+// }
+
+
+// function createVideoTimelineClock (contentId, timelineType, logger) {
+//     var videoElement = undefined;
+//     var videoCtrl = undefined;
+//     sessionInfo.contentId = contentId;
+//     sessionInfo.timelineType = timelineType;
+     
+//     if (videoClockObj === null) {
+//         videoClockObj = new VideoClock(synchroniser.wallclock, videoElement, videoCtrl);
+//         videoClockObj.on("change", function () {
+//             console.log("Video clock " + videoClockObj.id +" changed");
+//         });
+//    }
+// }
+
+
+
+
+
+// function destroy () {
+//     console.log("Call: CloudSynchroniser.destroy()");
+//     synchroniser.destroy();
+// }
+
 // syncUrl = { hostname: config.hostname, port: config.port };
 
 
 
-// sessionInfo = new SessionInfo();
-// sessionInfo.sessionId = getUrlParameter("sessionId") || "default";
-// sessionInfo.electionAlgorithm = getUrlParameter("electionAlgorithm") || "EarliestFirst";
-// sessionInfo.timelineInfo = [];
-// sessionInfo.syncTimelineInfo = [];
-// videoClock = null;
-// videoCtrl = null;
-// videoTimelineType = "tag:rd.bbc.co.uk,2015-12-08:dvb:css:timeline:simple-elapsed-time:1000";
+
 
 
 // function init () {
@@ -290,10 +385,7 @@ try {
 // }
 
 
-// function destroy () {
-//     console.log("Call: CloudSynchroniser.destroy()");
-//     synchroniser.destroy();
-// }
+
 
 // function getAvailableDevices () {
 //     console.log("Call:  CloudSynchroniser.getAvailableDevices()");
@@ -313,28 +405,28 @@ try {
 //     var video = $("video")[0];
 //     var videoCtrl = videojs("video", { muted: true, controls: true });
     
-//     if (videoClock === null) {
-//         videoClock = new VideoClock(synchroniser.wallclock, video, videoCtrl);
-//         videoClock.on("change", function () {
-//             console.log("%cVideo clock changed", "background-color:yellow;", JSON.stringify(videoClock));
+//     if (videoClockObj === null) {
+//         videoClockObj = new VideoClock(synchroniser.wallclock, video, videoCtrl);
+//         videoClockObj.on("change", function () {
+//             console.log("%cVideo clock changed", "background-color:yellow;", JSON.stringify(videoClockObj));
 //         });
         
-//         DisplayFactory.createClockDisplay("display", "Video Clock", videoClock, "utc");
-//         // DisplayFactory.createPlayerInfoDisplay("videoContainer", "Player Info", video, videoClock, "utc");
+//         DisplayFactory.createClockDisplay("display", "Video Clock", videoClockObj, "utc");
+//         // DisplayFactory.createPlayerInfoDisplay("videoContainer", "Player Info", video, videoClockObj, "utc");
 
 //         // Make video player follow the video clock
-//         VideoSynchroniser(videoClock, video);
+//         VideoSynchroniser(videoClockObj, video);
 //     }
 // }
 
 // function synchroniseVideoTimelineClock () {
 //     createVideoTimelineClock();
-//     synchroniser.synchronise(videoClock, videoTimelineType, $("video")[0].src);
+//     synchroniser.synchronise(videoClockObj, videoTimelineType, $("video")[0].src);
 // }
 
 // function addTimelineClock () {
 //     createVideoTimelineClock();
-//     synchroniser.addTimelineClock(videoClock, videoTimelineType, $("video")[0].src, {useForSessionSync: true, writable:true}).then(console.log);
+//     synchroniser.addTimelineClock(videoClockObj, videoTimelineType, $("video")[0].src, {useForSessionSync: true, writable:true}).then(console.log);
 // }
 
 // function getAvailableTimelines () {
@@ -378,7 +470,7 @@ try {
 //     var timelines = sessionInfo.timelineInfo.concat(sessionInfo.syncTimelineInfo);
 //     createTimelineList(function () {
 //         console.log("Call: CloudSynchroniser.syncClockToThisTimeline()");
-//         synchroniser.syncClockToThisTimeline(videoClock, this.name);
+//         synchroniser.syncClockToThisTimeline(videoClockObj, this.name);
 //     }, "Select timeline", timelines);
 // }
 

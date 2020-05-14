@@ -9,7 +9,7 @@ PRIVATE = new WeakMap();
 THRESHOLD_SIGNIFICANT_CHANGE = .02; // 20ms
 
 
-VideoClock = function (parentClock, videoElement, videoController, thresholdSecs) {
+VideoClock = function (parentClock, videoElement, thresholdSecs) {
     var priv, videoClock, self;
 
     self = this;
@@ -17,7 +17,7 @@ VideoClock = function (parentClock, videoElement, videoController, thresholdSecs
     videoClock = new CorrelatedClock(parentClock, {
         correlation: new Correlation({
             parentTime: parentClock.now(),
-            childTime: videoElement.currentTime*parentClock.tickRate
+            childTime: 0.0
         })
     });
     
@@ -28,58 +28,32 @@ VideoClock = function (parentClock, videoElement, videoController, thresholdSecs
         thresh: thresholdSecs || THRESHOLD_SIGNIFICANT_CHANGE
     });
 
-    videoController.controlBar.playToggle.on("click", function (e) {
-        switch (e.currentTarget.title) {
-            case "Pause":
-                console.log("Pause");
-                pauseClock.call(self);
-                break;
-            case "Play":
-                console.log("Play");
-                resumeClock.call(self);
-                break;
-            default:
-                break;
-        }
-    });
-
-    videoController.controlBar.progressControl.on("click", function (e) {
-        console.log(e);
-    })
-    
-    videoController.on("seeking", seekClock.bind(this));
-
-    /*
-     * Returns difference between clock that drives the video presentation
-     * and the actual video playback position.
-     */
-    videoClock.getClockDiff = function () {
-        return this.now()/this.tickRate - videoElement.currentTime;
-    };
-
     return videoClock;
 };
 
-function pauseClock () {
+VideoClock.prototype.pauseClock =  function  () {
     var priv = PRIVATE.get(this);
     // console.log("VideoClock: Handle media PAUSE");
     console.log("%c User caused PAUSE of video clock", "background-color:green; color: white;");
-    updateClock.call(this, priv.video.currentTime*priv.parent.tickRate, 0);
+    updateClock.call(this, priv.clock.now(), 0);
 }
 
-function resumeClock () {
+VideoClock.prototype.resumeClock  = function  () {
     var priv = PRIVATE.get(this);
     // console.log("VideoClock: Handle media PLAY");
     console.log("%c User caused RESUME of video clock", "background-color:green; color: white;");
-    updateClock.call(this, priv.video.currentTime*priv.parent.tickRate, 1);
+    updateClock.call(this, priv.clock.now(), 1);
 }
 
-function seekClock (pos) {
+VideoClock.prototype.seekClock = function  (seekamount) {
     var priv = PRIVATE.get(this);
-    if (pos.target.player.scrubbing_) {
+    if (seekamount >= 0) {
         // console.log("VideoClock: Handle media SEEK to position", priv.video.currentTime);
-        console.log("%c User caused SEEK of video clock" + "to position " + priv.video.currentTime, "background-color:green; color: white;");
-        updateClock.call(this, priv.video.currentTime*priv.parent.tickRate, priv.video.playbackRate);
+        console.log("%c User caused SEEK of video clock" + " by " + seekamount + "s", "background-color:green; color: white;");
+
+        var newNow = priv.clock.now() + (seekamount *  priv.clock.tickRate);
+
+        updateClock.call(this, newNow, priv.clock.speed);
     }
 }
 
