@@ -1,0 +1,56 @@
+#! /bin/bash
+
+warn () {
+  1>&2 echo "$@"
+}
+
+err () {
+  warn "$@"
+  exit 1
+}
+
+usage () {
+  err "Usage: $0 [--session-size=SIZE] NUM_SESSIONS"
+}
+
+spawn_session () {
+  session_number=$1
+  slaves="$((session_size - 1))"
+
+  node src/main.js -u cloudsync.virt.ch.bbc.co.uk -s 123456 -m 1 -r m -v &
+  seq 1 "$slaves" | parallel -j0 -n0 \
+    node src/main.js -u cloudsync.virt.ch.bbc.co.uk -s 123456 -m 1 -r s -v
+}
+
+# Process command line args
+while [[ $# -ge 1 ]]; do
+  case $1 in
+    --session-size)
+      shift
+      session_size=$1
+      shift
+      ;;
+    *)
+      [[ -z "$sessions" ]] || usage
+      sessions=$1
+      shift
+      ;;
+  esac
+done
+
+if [[ -z "$sessions" ]]; then
+  usage
+fi
+
+if [[ -z "$session_size" ]]; then
+  warn "Session size not set, using default size of 50"
+  session_size=50
+fi
+
+# Suppress GNU parallel citation requests
+yes will cite | >/dev/null 2>&1 parallel --citation
+
+warn "Spawning $sessions sessions with $session_size participants each."
+export -f spawn_session
+export session_size
+seq 1 "$sessions" | parallel -j0 spawn_session
