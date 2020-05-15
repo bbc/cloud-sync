@@ -13,6 +13,7 @@ Logger = require("./logger");
 url = require("url");
 fs = require('fs');
 ClientController = require("./ClientController");
+const SynchroniserLib = require("./Synchroniser");
 
 
 var config = {
@@ -78,13 +79,6 @@ const sections = [
             typeLabel: '{underline m|s}'
           },
           {
-            name: 'plan',
-            description: 'JSON file containing sequence of actions',
-            alias: 'f',
-            type: String,
-            typeLabel: '{underline file}'
-          },
-          {
             name: 'verbose',
             description: 'Log level',
             alias: 'v',
@@ -101,7 +95,6 @@ const optionDefinitions = [
     { name: "deviceid", alias: "d", type: String },
     { name: "role", alias: "r", type: String },
     { name: "syncmode", alias: "m", type: Number }, 
-    { name: "planfile", alias: "f", type: String }, 
     { name: "help", alias: "h", type: Boolean },
 	{ name: 'verbose', alias: 'v', type: Boolean, defaultValue: false },
 ];
@@ -116,21 +109,59 @@ try {
     {
         options.loglevel = options.verbose ? "development" : "info";
         logger = Logger.getNewInstance(options.loglevel, "cloudsynctestclient");
+        
+        if (((typeof  options.syncurl === "undefined") || (  options.syncurl === null)) 
+            || ((typeof  options.sessionid === "undefined") || (  options.sessionid === null)) 
+            || ((typeof  options.syncmode === "undefined") || (  options.syncmode === null))
+        )
+        {
+            throw "Missing one of these parameters: --syncurl (-u), --sessionid (-s), --syncmode (-m)";
+        } 
+        
+        if (options.syncmode ===  SynchroniserLib.SyncTLElection.EARLIEST_FIRST)
+        {
+            if ((typeof  options.role === "undefined") || ( options.role === null))
+            {
+                throw "Missing role parameter: --role -r";
+            }
+        }
+        
         config.syncURL = options.syncurl || "cloudsync.virt.ch.bbc.co.uk";
         config.sessionId = options.sessionid;
         config.loglevel = options.loglevel;
         process.env.loglevel = options.loglevel;
         config.deviceId = options.deviceid || "csclient-" + uuidv4();
-        config.syncMode = options.syncmode || SynchroniserLib.SyncTLElection.DYNAMIC;
-        config.planfile = options.planfile || "config/auxplan.json";
+
+        config.syncMode = options.syncmode;
+        
+        // if we are in EARLIEST_FIRST sync-mode, use 'role' to select test plan
+        if (options.syncmode === SynchroniserLib.SyncTLElection.EARLIEST_FIRST)
+        {
+            config.role = options.role;
+            if (options.role == "m")
+            {
+                config.planfile = "config/masterplan.json";
+            }else if (options.role == "s")
+            {
+                config.planfile = "config/auxplan.json";
+            }else
+            {
+                config.planfile = "config/masterplan.json";
+            }
+
+        }else // we are in DYNAMIC sync-mode and we use master test plan
+        {
+            config.role = "m";
+            config.planfile = "config/masterplan.json";
+        }
+
+
         config.plan = JSON.parse(fs.readFileSync(config.planfile, 'UTF-8'));
 
         if ((typeof  config.plan === "undefined") || ( config.plan === null))
         {
-            logger.error("Error loading test plan file. No plan to execute.");
+            throw "Error loading test plan file. No plan to execute.";
         }
-       
-
         
         logger.info("running node app with these params: ");
         console.log(config)

@@ -7,10 +7,14 @@ const Logger = require("./logger");
 const Clocks = require("dvbcss-clocks");
 const VideoClock = require("./VideoClock");
 const SessionInfo = require("./SessionInfo");
+const Correlation = require("dvbcss-clocks").Correlation;
+const WeakMap = require("weak-map");
+
 
 var logger;
 
 var PRIVATE = new WeakMap();
+var THRESHOLD_SIGNIFICANT_CHANGE = .02; // 20ms
 
 // ---------------------------------------------------------
 //  ClientController class
@@ -18,11 +22,11 @@ var PRIVATE = new WeakMap();
 
 class ClientController{
 
-	constructor(config)
+	constructor(config, thresholdSecs)
 	{
 		PRIVATE.set(this,{});
 		var priv = PRIVATE.get(this);
-
+		priv.thresh = thresholdSecs || THRESHOLD_SIGNIFICANT_CHANGE;
 		
 		priv.config = config;
 		priv.sessionInfo = new SessionInfo();
@@ -56,14 +60,10 @@ class ClientController{
 	stop()
 	{
 		var priv = PRIVATE.get(this);
-		// priv.messenger.stopListenAll();
-		// priv.messenger.disconnect();
-		// if (typeof priv.syncCrtlQProducer !== "undefined")
-		// {
-		// 	priv.syncCrtlQProducer.shutdown();
-		// }
 		
-		logger.info("stopped listening to channels");
+		priv.synchroniser.destroy();
+		
+		logger.info("Left session and stopped synchroniser.");
 	}
 
 }
@@ -157,22 +157,127 @@ function scheduleAllOtherJobs()
         switch (action.name) {
             case "publish":
 				setTimeout(publishTimelineClock.bind(self), action.time_secs * 1000, action.params["contentid"],  action.params["timelinetype"]);
-                break;
-        
+				break;
+			case "subscribe":
+				setTimeout(publishTimelineClock.bind(self), action.time_secs * 1000, action.params["contentid"],  action.params["timelinetype"]);
+				break;
+			case "pause":
+				setTimeout(pauseTimelineClock.bind(self), action.time_secs * 1000);
+				break;
+			case "seek":
+				setTimeout(seekTimelineClock.bind(self), action.time_secs * 1000, action.params["seek_pos"]);
+					break;
+			case "play":
+				setTimeout(resumeTimelineClock.bind(self), action.time_secs * 1000);
+					break;
+			case "send_devices_query":
+				setTimeout(getAvailableDevices.bind(self), action.time_secs * 1000);
+					break;
             default:
                 break;
         }
     }
 }
 
+// ---------------------------------------------------------
 
 function publishTimelineClock(contentId, timelineType) {
 
 	var self = this;
 	var priv = PRIVATE.get(self);
-
-    priv.synchroniser.synchronise(priv.videoClock, timelineType, contentId);
+	console.log(">>>>>>>>>>>> Action PUBLISH video timeline.");
+	console.log(priv.videoClock.speed);
+	priv.synchroniser.synchronise(priv.videoClock, timelineType, contentId);
+	console.log(priv.videoClock.speed);
     console.log("video timeline clock published.")
+}
+
+// ---------------------------------------------------------
+
+function subscribeTimelineClock(contentId, timelineType) {
+
+	var self = this;
+	var priv = PRIVATE.get(self);
+	console.log(">>>>>>>>>>>> Action SUBSCRIBE video timeline.");
+	priv.synchroniser.synchronise(priv.videoClock, timelineType, contentId);
+    console.log("video timeline clock subscribed.")
+}
+
+// ---------------------------------------------------------
+
+function pauseTimelineClock() {
+
+	var self = this;
+	var priv = PRIVATE.get(self);
+	console.log(">>>>>>>>>>>> Action PAUSE on video timeline.");
+	// priv.videoClock.pauseClock();
+	console.log(priv.videoClock.speed);
+	updateClock.call(self, priv.videoClock.now(), 0);
+	console.log(priv.videoClock.speed);
+	
+}
+
+// ---------------------------------------------------------
+
+function resumeTimelineClock() {
+
+	var self = this;
+	var priv = PRIVATE.get(self);
+	console.log(">>>>>>>>>>>> Action PLAY on video timeline.")
+
+	// priv.videoClock.pauseClock();
+	console.log(priv.videoClock.speed);
+	updateClock.call(self, priv.videoClock.now(), 1);
+	console.log(priv.videoClock.speed);
+    
+}
+
+// ---------------------------------------------------------
+
+function seekTimelineClock(timelinePosSecs) {
+
+	var self = this;
+	var priv = PRIVATE.get(self);
+
+	console.log(">>>>>>>>>>>> Action SEEK on video timeline to " + timelinePosSecs + "s")
+	console.log(priv.videoClock.speed);
+	updateClock.call(self, timelinePosSecs * priv.videoClock.tickRate, priv.videoClock.speed);
+	console.log(priv.videoClock.speed);
+    
+}
+
+// ---------------------------------------------------------
+
+function updateClock (newNow, newSpeed) {
+    var priv, newCorr, parentTime;
+    
+    priv = PRIVATE.get(this);
+    parentTime = priv.synchroniser.wallclock.now();
+    newCorr = new Correlation(parentTime, newNow);
+
+    if ((priv.videoClock.isChangeSignificant(newCorr, newSpeed, priv.thresh)) || (newSpeed !== priv.videoClock.speed)){
+        console.log("VideoClock:", "Setting new correlation", "(" + parentTime + ", " +  newNow + ")", "and speed", newSpeed);
+        priv.videoClock.setCorrelationAndSpeed(newCorr, newSpeed);
+    }
+}
+
+// ---------------------------------------------------------
+
+function getAvailableDevices () {
+
+	var self = this;
+	var priv = PRIVATE.get(self);
+	priv.logger.info("Call:  CloudSynchroniser.getAvailableDevices()");
+	console.log(">>>>>>>>>>>> Action QUERY for devices in session.");
+
+	
+    priv.synchroniser.getAvailableDevices().
+    then (function (devices) { 
+        priv.sessionInfo.devices = devices;
+    }).
+	catch (function (e) { 
+		console.log(error(e)); 
+	});
 }
 
 // ---------------------------------------------------------
