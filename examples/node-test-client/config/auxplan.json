@@ -13,20 +13,20 @@
 			}
 		},
 		{
+			"name" : "send_devices_query",
+			"time_secs" :8.0
+		},
+		{
 			"name" : "subscribe",
-			"time_secs" :7.0,
+			"time_secs" :30.0,
 			"params": {
 				"contentid" : "https://www.bbc.co.uk/iplayer/episode/m0009tt8",
 				"timelinetype": "tag:rd.bbc.co.uk,2015-12-08:dvb:css:timeline:simple-elapsed-time:1000"
 			}
 		},
 		{
-			"name" : "send_msg",
-			"time_secs" :8.0
-		},
-		{
-			"name" : "get_devices",
-			"time_secs" :15.0
+			"name" : "send_devices_query",
+			"time_secs" :45.0
 		}
 	]
 }
