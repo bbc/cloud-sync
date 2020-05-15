@@ -4,8 +4,13 @@
   "description": "Usage example of CloudSyncKit",
   "main": "main.js",
   "scripts": {
-    "debug": "node --nolazy --inspect-brk=9229 src/main.js -s 123234 -m 1 -f 'config/masterplan.json' -v",
-    "start": "node src/main.js -v -s 12342423 ",
+    "debug_master": "node --nolazy --inspect-brk=9229 src/main.js -u cloudsync.virt.ch.bbc.co.uk -s 123456 -m 1 -r m -v",
+    "debug_slave": "node --nolazy --inspect-brk=9229 src/main.js -u cloudsync.virt.ch.bbc.co.uk -s 123456 -m 1 -r s -v",
+    "debug_equal": "node --nolazy --inspect-brk=9229 src/main.js -u cloudsync.virt.ch.bbc.co.uk -s 123456 -m 2 -v",
+    "start_master": "node src/main.js -u cloudsync.virt.ch.bbc.co.uk -s 123456 -m 1 -r m -v",
+    "start_slave": "node src/main.js -u cloudsync.virt.ch.bbc.co.uk -s 123456 -m 1 -r s -v",
+    "start_equal": "node src/main.js -u cloudsync.virt.ch.bbc.co.uk -s 123456 -m 2 -v",
+    "start": "echo \"use npm run start-master|start-slave|start-equal\"",
     "test": "echo \"no tests specified\""
   },
   "author": "Rajiv Ramdhany",

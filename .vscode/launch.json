@@ -4,18 +4,48 @@
 		{
 			"type": "node",
 			"request": "launch",
-			"name": "debug node test client",
+			"name": "debug node client master mode",
 			"cwd": "${workspaceFolder}/examples/node-test-client",
 			"runtimeExecutable": "npm",
 			"runtimeArgs": [
 				"run-script",
-				"debug"
+				"debug_master"
 			],
 			"port": 9229,
 			"skipFiles": [
 				"<node_internals>/**"
 			]
-		}
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "debug node client slave mode",
+			"cwd": "${workspaceFolder}/examples/node-test-client",
+			"runtimeExecutable": "npm",
+			"runtimeArgs": [
+				"run-script",
+				"debug_slave"
+			],
+			"port": 9229,
+			"skipFiles": [
+				"<node_internals>/**"
+			]
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "debug node client equal mode",
+			"cwd": "${workspaceFolder}/examples/node-test-client",
+			"runtimeExecutable": "npm",
+			"runtimeArgs": [
+				"run-script",
+				"debug_equal"
+			],
+			"port": 9229,
+			"skipFiles": [
+				"<node_internals>/**"
+			]
+		},
 	],
 	"compounds": []
 }
