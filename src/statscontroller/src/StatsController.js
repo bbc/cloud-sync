@@ -87,7 +87,7 @@ class StatsController
 
 		// service endpoints
 		priv.config = config;
-		priv.serverName = process.env["INSTANCE_NAME"] || hostname();
+		priv.serverName = process.env["CLOUD_SYNC_INSTANCE_NAME"] || hostname();
 		priv.wallclockservice_udp = services.wallclockservice_udp;
 		priv.wallclockservice_ws = services.wallclockservice_ws;
 		priv.mosquitto = services.mqttbroker;
@@ -104,7 +104,7 @@ class StatsController
 		});
 		logger.info("connected to Redis endpoint " + JSON.stringify(config.redis));
 
-		priv.ENABLE_STATS_WRITE = process.env["ENABLE_INFLUX_DB_WRITE"] == 1 ? true : false;
+		priv.ENABLE_STATS_WRITE = process.env["ENABLE_INFLUX_DB_WRITE"] === "ON" ? true : false;
 
 		if (priv.ENABLE_STATS_WRITE)
 		{
@@ -114,13 +114,15 @@ class StatsController
 				logger.info("connected to InfluxDB.");
 				// setup default tags for all writes through this API
 				priv.writeApi.useDefaultTags({server: priv.serverName});
+
+				const point1 = new Point('temperature')
+				.tag('example', 'write.ts')
+				.floatField('value', 20 + Math.round(100 * Math.random()) / 10);
+				priv.writeApi.writePoint(point1);
+				console.log(` ${point1}`);
 			}
 		}
-		const point1 = new Point('temperature')
-								.tag('example', 'write.ts')
-								.floatField('value', 20 + Math.round(100 * Math.random()) / 10);
-		priv.writeApi.writePoint(point1);
-		console.log(` ${point1}`);
+
 		// priv.mqttClient = new Paho.MQTT.Client(host, port, user);
 
 	}
