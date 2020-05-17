@@ -278,7 +278,7 @@ try {
 		logger.info("Discovered redis service running on: " + JSON.stringify(services.redis));
 		// console.log(services);
 		
-		// setUpController(services);
+
 
 		statscontroller = new StatsController(services, config);
 
@@ -334,16 +334,3 @@ function setUpWebAPI()
 }
 
 
-/**
- * Create a SyncController
- */
-function setUpController() {
-	// console.log(config);
-	statscontroller = new StatsController(services, config);
-}
-	
-
-function cleanUp()
-{
-
-}

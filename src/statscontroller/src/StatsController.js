@@ -32,7 +32,10 @@ const Consumer = redisSMQ.Consumer;
 const uuidv4 = require("uuid/v4");
 const osutils = require("os-utils");
 
-// const cpuUsage = promis
+const {InfluxDB, Point, HttpError} = require("@influxdata/influxdb-client");
+const {url, token, org, bucket, username, password} = require("./env");
+const {hostname} = require("os");
+const PahoMQTT = require("paho-mqtt");
 
 
 var PRIVATE = new WeakMap();
@@ -84,10 +87,12 @@ class StatsController
 
 		// service endpoints
 		priv.config = config;
+		priv.serverName = process.env["INSTANCE_NAME"] || hostname();
 		priv.wallclockservice_udp = services.wallclockservice_udp;
 		priv.wallclockservice_ws = services.wallclockservice_ws;
 		priv.mosquitto = services.mqttbroker;
 		priv.redis = services.redis;
+	
 		
 		this.id = "statscontroller_" + uuidv4();
 		this.queueName = config.SyncControllerQueueName;		
@@ -98,6 +103,31 @@ class StatsController
 			logger.error("Redis connection Error : " + err);
 		});
 		logger.info("connected to Redis endpoint " + JSON.stringify(config.redis));
+
+		priv.ENABLE_STATS_WRITE = process.env["ENABLE_INFLUX_DB_WRITE"] == 1 ? true : false;
+
+		if (priv.ENABLE_STATS_WRITE)
+		{
+			priv.writeApi = new InfluxDB({url, token, username, password}).getWriteApi(org, bucket);
+			if ((typeof priv.writeApi !== "undefined" ) && (priv.writeApi!==null))
+			{
+				logger.info("connected to InfluxDB.");
+				// setup default tags for all writes through this API
+				priv.writeApi.useDefaultTags({server: priv.serverName});
+			}
+		}
+		const point1 = new Point('temperature')
+								.tag('example', 'write.ts')
+								.floatField('value', 20 + Math.round(100 * Math.random()) / 10);
+		priv.writeApi.writePoint(point1);
+		console.log(` ${point1}`);
+		// priv.mqttClient = new Paho.MQTT.Client(host, port, user);
+
+	}
+
+
+	start()
+	{
 
 	}
 
@@ -203,6 +233,15 @@ class StatsController
 // ---------------------------------------------------------
 //  Private methods
 // ---------------------------------------------------------
+
+function writeMQTTBrokerStats()
+{
+	let self = this;
+	let priv = PRIVATE.get(self);
+
+
+}
+
 
 /**
  * Callback method for mqtt client
