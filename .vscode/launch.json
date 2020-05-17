@@ -26,7 +26,7 @@
 				"run-script",
 				"debug_slave"
 			],
-			"port": 9229,
+			"port": 9230,
 			"skipFiles": [
 				"<node_internals>/**"
 			]
@@ -41,11 +41,21 @@
 				"run-script",
 				"debug_equal"
 			],
-			"port": 9229,
+			"port": 9231,
 			"skipFiles": [
 				"<node_internals>/**"
 			]
 		},
+		{
+			"name": "Debug StatsController node app in Docker",
+			"type": "node",
+			"request": "attach",
+			"port": 5855,
+			"address": "localhost",
+			"localRoot": "${workspaceFolder}/src/statscontroller/src",
+			"remoteRoot": "/usr/src/statscontroller/src",
+			"protocol": "inspector"
+		}
 	],
 	"compounds": []
 }
