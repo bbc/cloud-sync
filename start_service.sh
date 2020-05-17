@@ -66,8 +66,9 @@ echo "calling docker-compose up"
 # grunt build_lib
 export INSTANCE_NAME=testcloudsync
 export STATS_WRITE_FLAG=ON
-export INFLUX_URL=http://localhost:9999 
+export INFLUX_URL=http://ec2-35-179-17-39.eu-west-2.compute.amazonaws.com:9999 
 export INFLUX_TOKEN=386kJJ-6RiCpFs9oTKqZXFH_7GmsE7Nq-vVAgtMEFW2q2GcygByARsgvyMrrD6rwGdJJEIux1gC4C4FcZmvcoA==
 export INFLUX_TOKEN_TWO=qUmv08RH5vPu__8ub41F_EqnXjdB1ajNdtPrqHnZHYWC58-onNFXpbvkFqLVRu6WkCppL0pt-3ufhaZJ6gYXjg==
+set
 sudo docker-compose up --scale synccontroller=2
 

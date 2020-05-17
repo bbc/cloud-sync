@@ -105,7 +105,8 @@ class StatsController
 		logger.info("connected to Redis endpoint " + JSON.stringify(config.redis));
 
 		priv.ENABLE_STATS_WRITE = process.env["ENABLE_INFLUX_DB_WRITE"] === "ON" ? true : false;
-
+		console.log( priv.ENABLE_STATS_WRITE);
+		console.log( process.env);
 		if (priv.ENABLE_STATS_WRITE)
 		{
 			logger.info("creating InfluxDBClient");
