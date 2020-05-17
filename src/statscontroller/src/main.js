@@ -29,7 +29,7 @@ const app = express();
 const basicAuth = require('express-basic-auth');
  
 app.use(basicAuth({
-	users: { 'cloudsync': 'supersecret' },
+	users: { 'statsviewer': 'w4llcl0ck$4sync' },
 	challenge: true,
     realm: 'Imb4T3st4pp'
 }));
