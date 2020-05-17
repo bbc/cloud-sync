@@ -108,7 +108,9 @@ class StatsController
 
 		if (priv.ENABLE_STATS_WRITE)
 		{
+			logger.info("creating InfluxDBClient");
 			priv.writeApi = new InfluxDB({url, token, username, password}).getWriteApi(org, bucket);
+			console.log(priv.writeApi);
 			if ((typeof priv.writeApi !== "undefined" ) && (priv.writeApi!==null))
 			{
 				logger.info("connected to InfluxDB.");
