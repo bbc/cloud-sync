@@ -67,6 +67,22 @@ services:
       2immerse:
         aliases:
           - telegraf.service.consul
+  
+  wallclockservice:
+    build: ./wallclock-service
+    image: wallclockservice
+    ports:
+      - "6677:6677/udp"
+      - "6676:6676"
+      - "6675:80"
+    labels:
+      - "SERVICE_NAME=wallclock-service"
+    depends_on:
+      - registrator
+    networks:
+      2immerse:
+        aliases:
+          - wallclock-service.service.consul
 
   sessioncontroller:
     build:
@@ -79,14 +95,16 @@ services:
     volumes:
       - ./src/sessioncontroller/src:/usr/src/sessioncontroller/src
       - ./src/sessioncontroller/log:/usr/src/sessioncontroller/log
-
     depends_on:
       - registrator
       - mqttbroker
+      - wallclockservice
     labels:
       - "SERVICE_NAME=sessioncontroller"
     environment:
-        WALLCLOCK_SERVICE_WS_URL:  wss://wallclock-service.virt.ch.bbc.co.uk
+        WALLCLOCK_SERVICE_WS_URL:  wss://render-wallclock.rd.api.bbc.co.uk
+        ENABLE_INFLUX_DB_WRITE: 1
+        CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
     networks:
       2immerse:
         aliases:
@@ -107,10 +125,13 @@ services:
       - registrator
       - mqttbroker
       - redis
+      - wallclockservice
     labels:
       - "SERVICE_NAME=synccontroller"
     environment:
-        WALLCLOCK_SERVICE_WS_URL: wss://wallclock-service.virt.ch.bbc.co.uk
+        WALLCLOCK_SERVICE_WS_URL: wss://render-wallclock.rd.api.bbc.co.uk
+        ENABLE_INFLUX_DB_WRITE: 1
+        CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
     networks:
       2immerse:
         aliases:
@@ -124,7 +145,7 @@ services:
     ports:
       - 4001:4001
       - 5855:5855
-    command: npm start
+    command: npm run debug
     volumes:
       - ./src/statscontroller/src:/usr/src/statscontroller/src
       - ./src/statscontroller/log:/usr/src/statscontroller/log
@@ -132,10 +153,15 @@ services:
       - registrator
       - mqttbroker
       - redis
+      - wallclockservice
     labels:
       - "SERVICE_NAME=statscontroller"
     environment:
-        WALLCLOCK_SERVICE_WS_URL: wss://wallclock-service.virt.ch.bbc.co.uk
+        WALLCLOCK_SERVICE_WS_URL: wss://render-wallclock.rd.api.bbc.co.uk
+        ENABLE_INFLUX_DB_WRITE: 1
+        CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
+        INFLUX_URL: "${INFLUX_URL}"
+        INFLUX_TOKEN: "${INFLUX_TOKEN}"
     networks:
       2immerse:
         aliases:
@@ -154,6 +180,8 @@ services:
       - "SERVICE_NAME=timelineobserver"
     environment:
         CONSUL_URL: localhost:8500
+        ENABLE_INFLUX_DB_WRITE: 1
+        CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
     networks:
       2immerse:
         aliases:
