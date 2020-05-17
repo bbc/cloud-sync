@@ -57,12 +57,12 @@ else
 fi
 
 myArray=($addresses)
-echo "setting PUBLIC_IP env variable to: ${myArray[0]}"
-echo "writing config file $PWD/examples/synchronisedvideo/config/config.js"
-echo "module.exports = { hostname: \"${myArray[0]}\", port:9001};" > $PWD/examples/synchronisedvideo/config/config.js
-echo "writing config file $PWD/examples/synchronisedvideo/src/js/config.js"
-echo "module.exports = { hostname: \"${myArray[0]}\", port:9001};" > $PWD/examples/synchronisedvideo/src/js/config.js
+#echo "setting PUBLIC_IP env variable to: ${myArray[0]}"
+#echo "writing config file $PWD/examples/synchronisedvideo/config/config.js"
+#echo "module.exports = { hostname: \"${myArray[0]}\", port:9001};" > $PWD/examples/synchronisedvideo/config/config.js
+#echo "writing config file $PWD/examples/synchronisedvideo/src/js/config.js"
+#echo "module.exports = { hostname: \"${myArray[0]}\", port:9001};" > $PWD/examples/synchronisedvideo/src/js/config.js
 echo "calling docker-compose up"
-grunt build_lib
-docker-compose up -d --scale synccontroller=2
+#grunt build_lib
+sudo docker-compose up -d --scale synccontroller=3
 
