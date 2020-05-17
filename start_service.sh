@@ -57,12 +57,15 @@ else
 fi
 
 myArray=($addresses)
-echo "setting PUBLIC_IP env variable to: ${myArray[0]}"
-echo "writing config file $PWD/examples/synchronisedvideo/config/config.js"
-echo "module.exports = { hostname: \"${myArray[0]}\", port:9001};" > $PWD/examples/synchronisedvideo/config/config.js
-echo "writing config file $PWD/examples/synchronisedvideo/src/js/config.js"
-echo "module.exports = { hostname: \"${myArray[0]}\", port:9001};" > $PWD/examples/synchronisedvideo/src/js/config.js
+# echo "setting PUBLIC_IP env variable to: ${myArray[0]}"
+# echo "writing config file $PWD/examples/synchronisedvideo/config/config.js"
+# echo "module.exports = { hostname: \"${myArray[0]}\", port:9001};" > $PWD/examples/synchronisedvideo/config/config.js
+# echo "writing config file $PWD/examples/synchronisedvideo/src/js/config.js"
+# echo "module.exports = { hostname: \"${myArray[0]}\", port:9001};" > $PWD/examples/synchronisedvideo/src/js/config.js
 echo "calling docker-compose up"
-grunt build_lib
-docker-compose up -d --scale synccontroller=2
+# grunt build_lib
+export INSTANCE_NAME=testcloudsync 
+export INFLUX_URL=http://localhost:9999 
+export INFLUX_TOKEN=386kJJ-6RiCpFs9oTKqZXFH_7GmsE7Nq-vVAgtMEFW2q2GcygByARsgvyMrrD6rwGdJJEIux1gC4C4FcZmvcoA==
+INSTANCE_NAME=testcloudsync docker-compose up -d --scale synccontroller=2
 
