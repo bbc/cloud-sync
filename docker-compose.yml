@@ -52,7 +52,6 @@ services:
           - redis.service.consul
 
   telegraf:
-<<<<<<< HEAD
     image: telegraf
     environment:
       INFLUX_URL: "${INFLUX_URL}"
@@ -69,23 +68,6 @@ services:
         aliases:
           - telegraf.service.consul
   
-=======
-     image: telegraf
-     environment:
-         INFLUX_TOKEN: qUmv08RH5vPu__8ub41F_EqnXjdB1ajNdtPrqHnZHYWC58-onNFXpbvkFqLVRu6WkCppL0pt-3ufhaZJ6gYXjg==
-     volumes:
-         - /var/run/docker.sock:/var/run/docker.sock
-         - ./telegraf.conf:/etc/telegraf/telegraf.conf:ro
-     depends_on:
-       - redis
-     labels:
-       - "SERVICE_NAME=telegraf"
-     networks:
-       2immerse:
-         aliases:
-           - telegraf.service.consul
-
->>>>>>> adds Telegraf serice and replaces WALLCLOCK_SERVICE_WS_URL
   wallclockservice:
     build: ./wallclock-service
     image: wallclockservice
@@ -120,13 +102,10 @@ services:
     labels:
       - "SERVICE_NAME=sessioncontroller"
     environment:
-<<<<<<< HEAD
-        WALLCLOCK_SERVICE_WS_URL:  wss://render-wallclock.rd.api.bbc.co.uk
-        ENABLE_INFLUX_DB_WRITE: ${STATS_WRITE_FLAG}
-        CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
-=======
-        WALLCLOCK_SERVICE_WS_URL:  ws://ec2-18-132-71-230.eu-west-2.compute.amazonaws.com:6676
->>>>>>> adds Telegraf serice and replaces WALLCLOCK_SERVICE_WS_URL
+      WALLCLOCK_SERVICE_WS_URL:  ws://ec2-18-132-71-230.eu-west-2.compute.amazonaws.com:6676
+      ENABLE_INFLUX_DB_WRITE: ${STATS_WRITE_FLAG}
+      CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
+        
     networks:
       2immerse:
         aliases:
@@ -152,8 +131,8 @@ services:
       - "SERVICE_NAME=synccontroller"
     environment:
       WALLCLOCK_SERVICE_WS_URL: ws://ec2-18-132-71-230.eu-west-2.compute.amazonaws.com:6676
-        ENABLE_INFLUX_DB_WRITE: ${STATS_WRITE_FLAG}
-        CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
+      ENABLE_INFLUX_DB_WRITE: ${STATS_WRITE_FLAG}
+      CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
         
     networks:
       2immerse:
