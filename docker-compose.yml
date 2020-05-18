@@ -56,6 +56,7 @@ services:
     environment:
       INFLUX_URL: "${INFLUX_URL}"
       INFLUX_TOKEN: "${INFLUX_TOKEN}"
+      CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./telegraf/cloud-sync.conf:/etc/telegraf/telegraf.conf:ro
@@ -67,7 +68,7 @@ services:
       2immerse:
         aliases:
           - telegraf.service.consul
-  
+
   wallclockservice:
     build: ./wallclock-service
     image: wallclockservice
@@ -105,7 +106,7 @@ services:
       WALLCLOCK_SERVICE_WS_URL:  ${WALLCLOCK_SERVICE_WS_URL}
       ENABLE_INFLUX_DB_WRITE: ${STATS_WRITE_FLAG}
       CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
-        
+
     networks:
       2immerse:
         aliases:
@@ -133,7 +134,7 @@ services:
       WALLCLOCK_SERVICE_WS_URL: ${WALLCLOCK_SERVICE_WS_URL}
       ENABLE_INFLUX_DB_WRITE: ${STATS_WRITE_FLAG}
       CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
-        
+
     networks:
       2immerse:
         aliases:
@@ -164,7 +165,7 @@ services:
         CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
         INFLUX_URL: "${INFLUX_URL}"
         INFLUX_TOKEN: "${INFLUX_TOKEN}"
-        
+
     networks:
       2immerse:
         aliases:
