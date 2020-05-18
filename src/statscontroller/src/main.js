@@ -281,11 +281,13 @@ try {
 
 
 		statscontroller = new StatsController(services, config);
+		statscontroller.start();
 
 		setUpWebAPI();
 
 		// CRTL-C handler
 		process.on("SIGINT", function() {
+			statscontroller.stop();
 			process.exit();
 		});
 		
