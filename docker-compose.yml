@@ -102,7 +102,7 @@ services:
     labels:
       - "SERVICE_NAME=sessioncontroller"
     environment:
-      WALLCLOCK_SERVICE_WS_URL:  ws://ec2-18-132-71-230.eu-west-2.compute.amazonaws.com:6676
+      WALLCLOCK_SERVICE_WS_URL:  ${WALLCLOCK_SERVICE_WS_URL}
       ENABLE_INFLUX_DB_WRITE: ${STATS_WRITE_FLAG}
       CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
         
@@ -130,7 +130,7 @@ services:
     labels:
       - "SERVICE_NAME=synccontroller"
     environment:
-      WALLCLOCK_SERVICE_WS_URL: ws://ec2-18-132-71-230.eu-west-2.compute.amazonaws.com:6676
+      WALLCLOCK_SERVICE_WS_URL: ${WALLCLOCK_SERVICE_WS_URL}
       ENABLE_INFLUX_DB_WRITE: ${STATS_WRITE_FLAG}
       CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
         
@@ -159,7 +159,7 @@ services:
     labels:
       - "SERVICE_NAME=statscontroller"
     environment:
-        WALLCLOCK_SERVICE_WS_URL: ws://ec2-18-132-71-230.eu-west-2.compute.amazonaws.com:6676
+        WALLCLOCK_SERVICE_WS_URL: ${WALLCLOCK_SERVICE_WS_URL}
         ENABLE_INFLUX_DB_WRITE: ${STATS_WRITE_FLAG}
         CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
         INFLUX_URL: "${INFLUX_URL}"
