@@ -51,23 +51,6 @@ services:
         aliases:
           - redis.service.consul
 
-  telegraf:
-    image: telegraf
-    environment:
-      INFLUX_URL: "${INFLUX_URL}"
-      INFLUX_TOKEN: "${INFLUX_TOKEN}"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./telegraf/cloud-sync.conf:/etc/telegraf/telegraf.conf:ro
-    depends_on:
-      - redis
-    labels:
-      - "SERVICE_NAME=telegraf"
-    networks:
-      2immerse:
-        aliases:
-          - telegraf.service.consul
-  
   wallclockservice:
     build: ./wallclock-service
     image: wallclockservice
@@ -95,6 +78,7 @@ services:
     volumes:
       - ./src/sessioncontroller/src:/usr/src/sessioncontroller/src
       - ./src/sessioncontroller/log:/usr/src/sessioncontroller/log
+
     depends_on:
       - registrator
       - mqttbroker
@@ -102,15 +86,12 @@ services:
     labels:
       - "SERVICE_NAME=sessioncontroller"
     environment:
-      WALLCLOCK_SERVICE_WS_URL:  ${WALLCLOCK_SERVICE_WS_URL}
-      ENABLE_INFLUX_DB_WRITE: ${STATS_WRITE_FLAG}
-      CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
-        
+        WALLCLOCK_SERVICE_WS_URL:  ws://ec2-18-132-71-230.eu-west-2.compute.amazonaws.com:6676
     networks:
       2immerse:
         aliases:
           - sessioncontroller.service.consul
-
+  
   synccontroller:
     build:
       context: ./src
@@ -125,20 +106,17 @@ services:
     depends_on:
       - registrator
       - mqttbroker
-      - redis
       - wallclockservice
+      - redis
     labels:
       - "SERVICE_NAME=synccontroller"
     environment:
-      WALLCLOCK_SERVICE_WS_URL: ${WALLCLOCK_SERVICE_WS_URL}
-      ENABLE_INFLUX_DB_WRITE: ${STATS_WRITE_FLAG}
-      CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
-        
+        WALLCLOCK_SERVICE_WS_URL: ws://ec2-18-132-71-230.eu-west-2.compute.amazonaws.com:6676
     networks:
       2immerse:
         aliases:
           - synccontroller.service.consul
-
+  
   statscontroller:
     build:
       context: ./src
@@ -147,24 +125,19 @@ services:
     ports:
       - 4001:4001
       - 5855:5855
-    command: npm run debug
+    command: npm start
     volumes:
       - ./src/statscontroller/src:/usr/src/statscontroller/src
       - ./src/statscontroller/log:/usr/src/statscontroller/log
     depends_on:
       - registrator
       - mqttbroker
-      - redis
       - wallclockservice
+      - redis
     labels:
       - "SERVICE_NAME=statscontroller"
     environment:
-        WALLCLOCK_SERVICE_WS_URL: ${WALLCLOCK_SERVICE_WS_URL}
-        ENABLE_INFLUX_DB_WRITE: ${STATS_WRITE_FLAG}
-        CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
-        INFLUX_URL: "${INFLUX_URL}"
-        INFLUX_TOKEN: "${INFLUX_TOKEN}"
-        
+        WALLCLOCK_SERVICE_WS_URL: ws://ec2-18-132-71-230.eu-west-2.compute.amazonaws.com:6676
     networks:
       2immerse:
         aliases:
@@ -183,8 +156,6 @@ services:
       - "SERVICE_NAME=timelineobserver"
     environment:
         CONSUL_URL: localhost:8500
-        ENABLE_INFLUX_DB_WRITE: ${STATS_WRITE_FLAG}
-        CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
     networks:
       2immerse:
         aliases:
@@ -209,7 +180,7 @@ services:
         2immerse:
           aliases:
             - synchronisedvideo.service.consul
-
+  
 networks:
   2immerse:
      driver: bridge

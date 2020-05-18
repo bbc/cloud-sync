@@ -35,7 +35,7 @@ const osutils = require("os-utils");
 const {InfluxDB, Point, HttpError} = require("@influxdata/influxdb-client");
 const {url, token, org, bucket, username, password} = require("./env");
 const {hostname} = require("os");
-const PahoMQTT = require("paho-mqtt");
+const mqtt = require("mqtt");
 
 
 var PRIVATE = new WeakMap();
@@ -48,6 +48,23 @@ var logger;
 
 // const kSyncControllerQueueKey = "cloudsync_synccontroller_waitQueue";
 const SESSIONS_LIST_KEY = "cloud_sync_sessions";
+
+const Mosquitto_SYS_Topics = [
+	{ topic: "$SYS/broker/bytes/received", 		description : "The total number of bytes received since the broker started."},
+	{ topic: "$SYS/broker/bytes/sent",			description : "The total number of bytes sent since the broker started."},
+	{ topic: "$SYS/broker/clients/connected", 	description : "TThe number of currently connected clients."},
+	{ topic: "$SYS/broker/clients/disconnected", description : "The total number of persistent clients registered at the broker but are currently disconnected"},
+	{ topic: "$SYS/broker/clients/maximum", 		description : "The maximum number of clients connected simultaneously since the broker started"},
+	{ topic: "$SYS/broker/messages/received", 		description : "The total number of messages received since the broker started."},
+	{ topic: "$SYS/broker/messages/sent", 		description : "The total number of PUBLISH messages sent since the broker started."},
+	{ topic: "$SYS/broker/publish/messages/dropped", 		description : "The total number of PUBLISH messages that have been dropped due to inflight/queuing limits."},
+	{ topic: "$SYS/broker/uptime", 		description : "The total number of seconds since the broker started."},
+	{ topic: "$SYS/broker/clients/total", 		description : "The total number of clients connected since the broker started."},
+	{ topic: "$SYS/broker/load/connections/5min", 		description : "moving average of the number of CONNECT packets received by the broker over 5min"},
+	{ topic: "$SYS/broker/load/messages/received/5min", 		description : "The moving average of the number of all types of MQTT messages received by the broker over 5min"},
+	{ topic: "$SYS/broker/load/messages/sent/5min", 		description : "moving average of the number of all types of MQTT messages sent by the broker over 5min"},
+	{ topic: "$SYS/broker/load/publish/dropped/5min", 		description : "moving average of the number of publish messages dropped by the broker over 5min"}
+];
 
 
 // ---------------------------------------------------------
@@ -106,33 +123,79 @@ class StatsController
 
 		priv.ENABLE_STATS_WRITE = process.env["ENABLE_INFLUX_DB_WRITE"] === "ON" ? true : false;
 
+		// console.log( process.env);
 		if (priv.ENABLE_STATS_WRITE)
 		{
+			logger.info("creating InfluxDBClient");
 			priv.writeApi = new InfluxDB({url, token, username, password}).getWriteApi(org, bucket);
+
 			if ((typeof priv.writeApi !== "undefined" ) && (priv.writeApi!==null))
 			{
 				logger.info("connected to InfluxDB.");
 				// setup default tags for all writes through this API
 				priv.writeApi.useDefaultTags({server: priv.serverName});
 
-				const point1 = new Point('temperature')
-				.tag('example', 'write.ts')
-				.floatField('value', 20 + Math.round(100 * Math.random()) / 10);
-				priv.writeApi.writePoint(point1);
-				console.log(` ${point1}`);
 			}
+
+			priv.STATS_INTERVAL = 1*60*1000;
+			priv.statsTimers = [];
 		}
-
-		// priv.mqttClient = new Paho.MQTT.Client(host, port, user);
-
 	}
 
 
 	start()
 	{
+		let self = this;
+		let priv = PRIVATE.get(self);
 
+		// connect the client
+		var user = priv.serverName + "_statscontroller";
+
+		if (typeof priv.mosquitto.port !== "undefined"){
+			priv.mqttClient = mqtt.connect({ host: priv.mosquitto.host, port: priv.mosquitto.port, keepalive: 60, clientId: user});
+		}else
+		{
+			var mqtt_url = "ws://" + priv.mosquitto.host;
+			priv.mqttClient = mqtt.connect( mqtt_url,  { keepalive: 60, clientId: user});
+		}
+		   
+		priv.mqttClient.on("connect", onConnect.bind(this));
+		priv.mqttClient.on("error", onConnectionFailure.bind(this));
+		priv.mqttClient.on("close", onConnectionLost.bind(this));
+		priv.mqttClient.on("message", onMessageArrived.bind(this));
+
+
+		const intervalObj = setInterval(writeSessionInfo.bind(this), priv.STATS_INTERVAL);
+		priv.statsTimers.push(intervalObj);
 	}
 
+
+	stop()
+	{
+		let self = this;
+		let priv = PRIVATE.get(self);
+		console.log("stopping statscontroller ....");
+		priv.mqttClient.end();
+		console.log("unsubcribing from mqtt topics.")
+
+
+		for (const t of priv.statsTimers) {
+			clearInterval(t);
+		}
+
+		priv.writeApi
+			.close()
+			.then(() => {
+				console.log('FINISHED ')
+			})
+			.catch(e => {
+				console.error(e);
+				if (e instanceof HttpError && e.statusCode === 401) {
+					console.log(e);
+				}
+				console.log('\nFinished ERROR');
+			});
+	}
 	// ---------------------------------------------------------
 	/**
 	 * Returns get number of sessions as a Promise
@@ -215,20 +278,15 @@ class StatsController
 		});	
 	}
 
-	// get number of devices in session
+	// get total number of devices in session
 	getDevicesInSessionCountAsync()
 	{
-
+		// not implemented
+		throw "not implemented";
 	}
-
-	// get number of WS connections to Mosquitto MQTT broker
-
 
 	// get number of jobs in redis-smq queue and average job wait times
 
-
-
-	
 
 } // end of class definition
 
@@ -236,34 +294,190 @@ class StatsController
 //  Private methods
 // ---------------------------------------------------------
 
-function writeMQTTBrokerStats()
+function writeSessionInfo()
 {
 	let self = this;
 	let priv = PRIVATE.get(self);
 
+	var sessionsCountPoint, sessionDevicesCountPoint, totalDevicesCountPoint;
 
+	self.getAllSessionsInfoAsync().then((sessionsInfo)=>{
+		let total_devices = 0;
+
+		if ((typeof sessionsInfo.session_count !== "undefined") && 
+			(sessionsInfo.session_count !== null))
+		{
+			sessionsCountPoint = new Point('sessions_now')
+				.tag('CLOUD_SYNC_INSTANCE', priv.serverName)
+				.tag('SERVICE_NAME', 'statscontroller')
+				.intField("sessions", sessionsInfo.session_count);
+			priv.writeApi.writePoint(sessionsCountPoint);
+
+			for (const session of sessionsInfo.sessions) {
+				
+				total_devices += session.device_count;
+
+				sessionDevicesCountPoint = new Point('session_metrics')
+					.tag('CLOUD_SYNC_INSTANCE', priv.serverName)
+					.tag('SERVICE_NAME', 'statscontroller')
+					.tag("ENTITY", "session")
+					.stringField("sessionId", session.session_id)
+					.stringField("createdOn", session.createdOn)
+					.intField("devices", session.device_count);
+				priv.writeApi.writePoint(sessionDevicesCountPoint);
+			}
+		}
+
+		totalDevicesCountPoint = new Point('devices_now')
+				.tag('CLOUD_SYNC_INSTANCE', priv.serverName)
+				.tag('SERVICE_NAME', 'statscontroller')
+				.intField("devices", total_devices);
+			priv.writeApi.writePoint(totalDevicesCountPoint);
+
+	}).catch((error)=>
+	{
+		console.log(error);
+	});
+
+	
+
+
+	
 }
 
 
-/**
- * Callback method for mqtt client
- * @param {pbject} serviceEndpoint 
- */
-function handleAdapterConnected (serviceEndpoint) {
-	logger.info("Connected to mqtt broker:", serviceEndpoint.host + ":" + serviceEndpoint.port);
-}
 
 // ---------------------------------------------------------
-/**
- * Callback method for mqtt client
- * @param {object} error 
- */
-function handleAdapterConnectionFailure (error) {
-	logger.error(error);
 
-}
+// called when the client connects
+function onConnect(connack) {
+	let self = this;
+	let priv = PRIVATE.get(self);
+	// Once a connection has been made, subscribe to $SYS topics 
+	logger.info("Connected to mqtt broker:", priv.mosquitto.host + ":" + priv.mosquitto.port);
 
+	priv.mqttClient.subscribe("$SYS/#");
 
+  }
+  
+  // called when the client loses its connection
+  function onConnectionFailure(error) {
+	
+	  logger.error("onConnectionFailure:" + error);
+	
+  }
+  
+  // called when the client loses its connection
+  function onConnectionLost() {
+	logger.error("connection to mqtt broker lost.");
+  }
+  
+  // called when a message arrives
+  function onMessageArrived(topic, message) {
+	let self = this;
+	let priv = PRIVATE.get(self);
+
+	let value = message.toString();
+	var mpoint;
+
+	switch (topic) {
+		case  "$SYS/broker/bytes/received":
+			mpoint = new Point('bytes_received')
+				.tag('CLOUD_SYNC_INSTANCE', priv.serverName)
+				.tag('SERVICE_NAME', 'mqttbroker')
+				.intField("bytes", value)
+			priv.writeApi.writePoint(mpoint);
+			break;
+		case  "$SYS/broker/bytes/sent":
+			mpoint = new Point('bytes_sent')
+				.tag('CLOUD_SYNC_INSTANCE', priv.serverName)
+				.tag('SERVICE_NAME', 'mqttbroker')
+				.intField("bytes", value)
+			priv.writeApi.writePoint(mpoint);
+			break;
+		case  "$SYS/broker/clients/connected":
+			mpoint = new Point('clients_connected')
+				.tag('CLOUD_SYNC_INSTANCE', priv.serverName)
+				.tag('SERVICE_NAME', 'mqttbroker')
+				.intField("clients", value)
+			priv.writeApi.writePoint(mpoint);
+			break;
+		case  "$SYS/broker/clients/disconnected":
+			mpoint = new Point('clients_disconnected')
+				.tag('CLOUD_SYNC_INSTANCE', priv.serverName)
+				.tag('SERVICE_NAME', 'mqttbroker')
+				.intField("clients", value)
+			priv.writeApi.writePoint(mpoint);
+			break;
+		case  "$SYS/broker/clients/maximum":
+			mpoint = new Point('clients_maximum')
+				.tag('CLOUD_SYNC_INSTANCE', priv.serverName)
+				.tag('SERVICE_NAME', 'mqttbroker')
+				.intField("clients", value)
+			priv.writeApi.writePoint(mpoint);
+			break;
+		case  "$SYS/broker/messages/received":
+			mpoint = new Point('msgs_received')
+				.tag('CLOUD_SYNC_INSTANCE', priv.serverName)
+				.tag('SERVICE_NAME', 'mqttbroker')
+				.intField("msgs", value)
+			priv.writeApi.writePoint(mpoint);
+			break;
+		case  "$SYS/broker/messages/sent":
+			mpoint = new Point('msgs_sent')
+				.tag('CLOUD_SYNC_INSTANCE', priv.serverName)
+				.tag('SERVICE_NAME', 'mqttbroker')
+				.intField("msgs", value)
+			priv.writeApi.writePoint(mpoint);
+			break;
+		case "$SYS/broker/publish/messages/dropped":
+			mpoint = new Point('msgs_dropped')
+				.tag('CLOUD_SYNC_INSTANCE', priv.serverName)
+				.tag('SERVICE_NAME', 'mqttbroker')
+				.intField("msgs", value)
+			priv.writeApi.writePoint(mpoint);
+			break;
+		case "$SYS/broker/clients/total":
+			mpoint = new Point('clients_total')
+				.tag('CLOUD_SYNC_INSTANCE', priv.serverName)
+				.tag('SERVICE_NAME', 'mqttbroker')
+				.intField("clients", value)
+			priv.writeApi.writePoint(mpoint);
+			break;
+		case "$SYS/broker/load/connections/5min":
+			mpoint = new Point('connections_avg_5min')
+				.tag('CLOUD_SYNC_INSTANCE', priv.serverName)
+				.tag('SERVICE_NAME', 'mqttbroker')
+				.intField("average", value)
+			priv.writeApi.writePoint(mpoint);
+			break;
+		case "$SYS/broker/load/messages/received/5min":
+			mpoint = new Point('msgs_received_avg_5min')
+				.tag('CLOUD_SYNC_INSTANCE', priv.serverName)
+				.tag('SERVICE_NAME', 'mqttbroker')
+				.intField("average", value)
+			priv.writeApi.writePoint(mpoint);
+			break;
+		case "$SYS/broker/load/messages/sent/5min":
+			mpoint = new Point('msgs_sent_avg_5min')
+				.tag('CLOUD_SYNC_INSTANCE', priv.serverName)
+				.tag('SERVICE_NAME', 'mqttbroker')
+				.intField("average", value)
+			priv.writeApi.writePoint(mpoint);
+			break;
+		case "$SYS/broker/load/publish/dropped/5min":
+			mpoint = new Point('msgs_dropped_avg_5min')
+				.tag('CLOUD_SYNC_INSTANCE', priv.serverName)
+				.tag('SERVICE_NAME', 'mqttbroker')
+				.intField("average", value)
+			priv.writeApi.writePoint(mpoint);
+			break;
+		default:
+			break;
+	}
+  }
+  
+  
 
 // ---------------------------------------------------------
 // Utility methods

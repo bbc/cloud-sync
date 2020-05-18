@@ -1,2 +1,2 @@
-module.exports = { hostname: "render-sync.rd.api.bbc.co.uk"};
+module.exports = { hostname: "render-sync-three.rd.api.bbc.co.uk"};
 
