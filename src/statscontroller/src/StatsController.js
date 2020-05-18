@@ -312,6 +312,7 @@ function writeSessionInfo()
 				.tag('SERVICE_NAME', 'statscontroller')
 				.intField("sessions", sessionsInfo.session_count);
 			priv.writeApi.writePoint(sessionsCountPoint);
+			logger.info(sessionsCountPoint.name + " measurement written to InfluxDB");
 
 			for (const session of sessionsInfo.sessions) {
 				
@@ -325,6 +326,7 @@ function writeSessionInfo()
 					.stringField("createdOn", session.createdOn)
 					.intField("devices", session.device_count);
 				priv.writeApi.writePoint(sessionDevicesCountPoint);
+				logger.info(sessionDevicesCountPoint.name + " measurement written to InfluxDB");
 			}
 		}
 
@@ -333,6 +335,7 @@ function writeSessionInfo()
 				.tag('SERVICE_NAME', 'statscontroller')
 				.intField("devices", total_devices);
 			priv.writeApi.writePoint(totalDevicesCountPoint);
+			logger.info(totalDevicesCountPoint.name + " measurement written to InfluxDB");
 
 	}).catch((error)=>
 	{
@@ -387,6 +390,7 @@ function onConnect(connack) {
 				.tag('SERVICE_NAME', 'mqttbroker')
 				.intField("bytes", value)
 			priv.writeApi.writePoint(mpoint);
+			logger.info(mpoint.name + " measurement written to InfluxDB");
 			break;
 		case  "$SYS/broker/bytes/sent":
 			mpoint = new Point('bytes_sent')
@@ -394,6 +398,7 @@ function onConnect(connack) {
 				.tag('SERVICE_NAME', 'mqttbroker')
 				.intField("bytes", value)
 			priv.writeApi.writePoint(mpoint);
+			logger.info(mpoint.name + " measurement written to InfluxDB");
 			break;
 		case  "$SYS/broker/clients/connected":
 			mpoint = new Point('clients_connected')
@@ -401,6 +406,7 @@ function onConnect(connack) {
 				.tag('SERVICE_NAME', 'mqttbroker')
 				.intField("clients", value)
 			priv.writeApi.writePoint(mpoint);
+			logger.info(mpoint.name + " measurement written to InfluxDB");
 			break;
 		case  "$SYS/broker/clients/disconnected":
 			mpoint = new Point('clients_disconnected')
@@ -408,6 +414,7 @@ function onConnect(connack) {
 				.tag('SERVICE_NAME', 'mqttbroker')
 				.intField("clients", value)
 			priv.writeApi.writePoint(mpoint);
+			logger.info(mpoint.name + " measurement written to InfluxDB");
 			break;
 		case  "$SYS/broker/clients/maximum":
 			mpoint = new Point('clients_maximum')
@@ -415,6 +422,7 @@ function onConnect(connack) {
 				.tag('SERVICE_NAME', 'mqttbroker')
 				.intField("clients", value)
 			priv.writeApi.writePoint(mpoint);
+			logger.info(mpoint.name + " measurement written to InfluxDB");
 			break;
 		case  "$SYS/broker/messages/received":
 			mpoint = new Point('msgs_received')
@@ -422,6 +430,7 @@ function onConnect(connack) {
 				.tag('SERVICE_NAME', 'mqttbroker')
 				.intField("msgs", value)
 			priv.writeApi.writePoint(mpoint);
+			logger.info(mpoint.name + " measurement written to InfluxDB");
 			break;
 		case  "$SYS/broker/messages/sent":
 			mpoint = new Point('msgs_sent')
@@ -429,6 +438,7 @@ function onConnect(connack) {
 				.tag('SERVICE_NAME', 'mqttbroker')
 				.intField("msgs", value)
 			priv.writeApi.writePoint(mpoint);
+			logger.info(mpoint.name + " measurement written to InfluxDB");
 			break;
 		case "$SYS/broker/publish/messages/dropped":
 			mpoint = new Point('msgs_dropped')
@@ -436,6 +446,7 @@ function onConnect(connack) {
 				.tag('SERVICE_NAME', 'mqttbroker')
 				.intField("msgs", value)
 			priv.writeApi.writePoint(mpoint);
+			logger.info(mpoint.name + " measurement written to InfluxDB");
 			break;
 		case "$SYS/broker/clients/total":
 			mpoint = new Point('clients_total')
@@ -443,6 +454,7 @@ function onConnect(connack) {
 				.tag('SERVICE_NAME', 'mqttbroker')
 				.intField("clients", value)
 			priv.writeApi.writePoint(mpoint);
+			logger.info(mpoint.name + " measurement written to InfluxDB");
 			break;
 		case "$SYS/broker/load/connections/5min":
 			mpoint = new Point('connections_avg_5min')
@@ -450,6 +462,7 @@ function onConnect(connack) {
 				.tag('SERVICE_NAME', 'mqttbroker')
 				.intField("average", value)
 			priv.writeApi.writePoint(mpoint);
+			logger.info(mpoint.name + " measurement written to InfluxDB");
 			break;
 		case "$SYS/broker/load/messages/received/5min":
 			mpoint = new Point('msgs_received_avg_5min')
@@ -457,6 +470,7 @@ function onConnect(connack) {
 				.tag('SERVICE_NAME', 'mqttbroker')
 				.intField("average", value)
 			priv.writeApi.writePoint(mpoint);
+			logger.info(mpoint.name + " measurement written to InfluxDB");
 			break;
 		case "$SYS/broker/load/messages/sent/5min":
 			mpoint = new Point('msgs_sent_avg_5min')
@@ -464,6 +478,7 @@ function onConnect(connack) {
 				.tag('SERVICE_NAME', 'mqttbroker')
 				.intField("average", value)
 			priv.writeApi.writePoint(mpoint);
+			logger.info(mpoint.name + " measurement written to InfluxDB");
 			break;
 		case "$SYS/broker/load/publish/dropped/5min":
 			mpoint = new Point('msgs_dropped_avg_5min')
@@ -471,6 +486,7 @@ function onConnect(connack) {
 				.tag('SERVICE_NAME', 'mqttbroker')
 				.intField("average", value)
 			priv.writeApi.writePoint(mpoint);
+			logger.info(mpoint.name + " measurement written to InfluxDB");
 			break;
 		default:
 			break;
