@@ -10,35 +10,43 @@ err () {
 }
 
 usage () {
-  err "Usage: $0 [--session-size=SIZE] NUM_SESSIONS"
+  err "Usage: $0 [--session-size=SIZE] URL NUM_SESSIONS"
 }
 
 spawn_session () {
   session_number=$1
   slaves="$((session_size - 1))"
 
-  node src/main.js -u cloudsync.virt.ch.bbc.co.uk -s 123456 -m 1 -r m -v &
+  echo node src/main.js -u "$url" -s "$session_number" -m 1 -r m -v &
   seq 1 "$slaves" | parallel -j0 -n0 \
-    node src/main.js -u cloudsync.virt.ch.bbc.co.uk -s 123456 -m 1 -r s -v
+    echo node src/main.js -u "$url" -s "$session_number" -m 1 -r s -v
 }
 
 # Process command line args
 while [[ $# -ge 1 ]]; do
   case $1 in
+    --url)
+      shift
+      url=$1
+      shift
+      ;;
     --session-size)
       shift
       session_size=$1
       shift
       ;;
     *)
-      [[ -z "$sessions" ]] || usage
-      sessions=$1
+      if [[ -z "$url" ]]; then
+        url=$1
+      elif [[ -z "$sessions" ]]; then
+        sessions=$1
+      fi
       shift
       ;;
   esac
 done
 
-if [[ -z "$sessions" ]]; then
+if [[ -z "$url" ]] || [[ -z "$sessions" ]]; then
   usage
 fi
 
@@ -52,5 +60,5 @@ yes will cite | >/dev/null 2>&1 parallel --citation
 
 warn "Spawning $sessions sessions with $session_size participants each."
 export -f spawn_session
-export session_size
+export session_size url
 seq 1 "$sessions" | parallel -j0 spawn_session
