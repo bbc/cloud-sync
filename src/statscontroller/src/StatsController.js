@@ -123,6 +123,8 @@ class StatsController
 
 		priv.ENABLE_STATS_WRITE = process.env["ENABLE_INFLUX_DB_WRITE"] === "ON" ? true : false;
 
+		priv.statsTimers = [];
+
 		// console.log( process.env);
 		if (priv.ENABLE_STATS_WRITE)
 		{
@@ -138,7 +140,7 @@ class StatsController
 			}
 
 			priv.STATS_INTERVAL = 1*60*1000;
-			priv.statsTimers = [];
+			
 		}
 	}
 
@@ -164,9 +166,11 @@ class StatsController
 		priv.mqttClient.on("close", onConnectionLost.bind(this));
 		priv.mqttClient.on("message", onMessageArrived.bind(this));
 
-
-		const intervalObj = setInterval(writeSessionInfo.bind(this), priv.STATS_INTERVAL);
-		priv.statsTimers.push(intervalObj);
+		if (priv.ENABLE_STATS_WRITE){
+			const intervalObj = setInterval(writeSessionInfo.bind(this), priv.STATS_INTERVAL);
+			priv.statsTimers.push(intervalObj);
+		}
+		
 	}
 
 
@@ -178,12 +182,12 @@ class StatsController
 		priv.mqttClient.end();
 		console.log("unsubcribing from mqtt topics.")
 
+		if (priv.ENABLE_STATS_WRITE){
+			for (const t of priv.statsTimers) {
+				clearInterval(t);
+			}
 
-		for (const t of priv.statsTimers) {
-			clearInterval(t);
-		}
-
-		priv.writeApi
+			priv.writeApi
 			.close()
 			.then(() => {
 				console.log('FINISHED ')
@@ -195,6 +199,7 @@ class StatsController
 				}
 				console.log('\nFinished ERROR');
 			});
+		}		
 	}
 	// ---------------------------------------------------------
 	/**
