@@ -17,9 +17,9 @@ spawn_session () {
   session_number=$1
   slaves="$((session_size - 1))"
 
-  echo node src/main.js -u "$url" -s "$session_number" -m 1 -r m -v &
+  node src/main.js -u "$url" -s "$session_number" -m 1 -r m -v &
   seq 1 "$slaves" | parallel -j0 -n0 \
-    echo node src/main.js -u "$url" -s "$session_number" -m 1 -r s -v
+    node src/main.js -u "$url" -s "$session_number" -m 1 -r s -v
 }
 
 # Process command line args
