@@ -90,9 +90,19 @@ function connectToSyncService()
 {
 	var self = this;
 	var priv = PRIVATE.get(self);
+	var endpoint;
+
+	const  endpoint_str = priv.config.syncURL.split(":");
+	if (endpoint_str.length == 2)
+	{
+		endpoint = { hostname: endpoint_str[0], port: endpoint_str[1]};
+	}else if (endpoint_str.length == 1)
+	{
+		endpoint = { hostname: endpoint_str[0]};
+	}
 
 	priv.synchroniser = new SynchroniserLib.CloudSynchroniser(
-        { hostname: priv.config.syncURL},
+       	endpoint,
         priv.config.sessionId,
         "DEFAULT",
         priv.config.deviceId,
