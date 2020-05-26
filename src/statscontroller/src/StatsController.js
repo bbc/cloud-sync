@@ -139,7 +139,7 @@ class StatsController
 
 			}
 
-			priv.STATS_INTERVAL = 1*60*1000;
+			priv.STATS_INTERVAL_SECS = process.env["STATS_WRITE_INTERVAL_SECS"] || 60;
 			
 		}
 	}
@@ -167,7 +167,7 @@ class StatsController
 		priv.mqttClient.on("message", onMessageArrived.bind(this));
 
 		if (priv.ENABLE_STATS_WRITE){
-			const intervalObj = setInterval(writeSessionInfo.bind(this), priv.STATS_INTERVAL);
+			const intervalObj = setInterval(writeSessionInfo.bind(this), priv.STATS_INTERVAL_SECS * 1000);
 			priv.statsTimers.push(intervalObj);
 		}
 		
