@@ -10,7 +10,7 @@ err () {
 }
 
 usage () {
-  err "Usage: $0 [--session-size=SIZE] URL NUM_SESSIONS"
+  err "Usage: $0 [--session-size SIZE] URL NUM_SESSIONS"
 }
 
 spawn_session () {
@@ -25,11 +25,6 @@ spawn_session () {
 # Process command line args
 while [[ $# -ge 1 ]]; do
   case $1 in
-    --url)
-      shift
-      url=$1
-      shift
-      ;;
     --session-size)
       shift
       session_size=$1
