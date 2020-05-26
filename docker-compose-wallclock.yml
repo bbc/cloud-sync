@@ -26,6 +26,7 @@ services:
     environment:
       INFLUX_URL: "${INFLUX_URL}"
       INFLUX_TOKEN: "${INFLUX_TOKEN}"
+      CLOUDSYNC_INSTANCE_NAME: "${INSTANCE_NAME}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./telegraf/wallclock.conf:/etc/telegraf/telegraf.conf:ro
