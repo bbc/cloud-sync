@@ -18,7 +18,7 @@ spawn_session () {
   slaves="$((session_size - 1))"
 
   node src/main.js -u "$url" -s "$session_number" -m 1 -r m -v &
-  seq 1 "$slaves" | parallel -j0 -n0 \
+  seq 1 "$slaves" | parallel -u -j0 -n0 \
     node src/main.js -u "$url" -s "$session_number" -m 1 -r s -v
 }
 
@@ -56,4 +56,4 @@ yes will cite | >/dev/null 2>&1 parallel --citation
 warn "Spawning $sessions sessions with $session_size participants each."
 export -f spawn_session
 export session_size url
-seq 1 "$sessions" | parallel -j0 spawn_session
+seq 1 "$sessions" | parallel -u -j0 spawn_session
