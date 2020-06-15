@@ -33,6 +33,7 @@
     "os-utils": "0.0.14",
     "paho-mqtt": "^1.0.3",
     "redis": "^2.8.0",
+    "ioredis": "4.16.0",
     "redis-connection": "^5.4.0",
     "redis-smq": "^1.0.20",
     "request": "^2.74.0",

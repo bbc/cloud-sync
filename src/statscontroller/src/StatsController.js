@@ -37,6 +37,8 @@ const {url, token, org, bucket, username, password} = require("./env");
 const {hostname} = require("os");
 const mqtt = require("mqtt");
 
+const RedisSMQStats = require("./RedisSMQMonitor");
+
 
 var PRIVATE = new WeakMap();
 var logger;
@@ -120,6 +122,7 @@ class StatsController
 			logger.error("Redis connection Error : " + err);
 		});
 		logger.info("connected to Redis endpoint " + JSON.stringify(config.redis));
+		priv.redissmqConfig = new RedisSMQConfig(priv.redis.host, priv.redis.port);
 
 		priv.ENABLE_STATS_WRITE = process.env["ENABLE_INFLUX_DB_WRITE"] === "ON" ? true : false;
 
@@ -169,6 +172,11 @@ class StatsController
 		if (priv.ENABLE_STATS_WRITE){
 			const intervalObj = setInterval(writeSessionInfo.bind(this), priv.STATS_INTERVAL_SECS * 1000);
 			priv.statsTimers.push(intervalObj);
+
+			priv.redisSMQStatsWriter = RedisSMQStats(priv.redissmqConfig.getConfig());
+			priv.redisSMQStatsWriter.listen(()=>{
+				console.log("Listening and processing redis-smq stats");
+			});
 		}
 		
 	}
