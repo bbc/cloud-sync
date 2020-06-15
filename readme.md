@@ -72,19 +72,22 @@ The resulting JS client library is placed in `dist/browser/Cloud-SyncKit.js`.
     *docker-compose* installation instructions are available here: `https://docs.docker.com/compose/install/`
 
 
-2. Edit `docker-compose.yml` to change the WallClock service endpoint advertised to the cloud-sync service clients.
+2. Edit the `.env` file  (a .env_test file is available for local testing)
+    
+   1. To change WallClock service endpoint advertised to the cloud-sync service clients
+        Set `WALLCLOCK_SERVICE_WS_URL` with a websocket address e.g. `ws://localhost:6676`.
+        If running locally, the WallClock-Service websocket endpoint is exposed at `ws://<YOUR_MACHINE_IP>:6676`
+   2. Set `INSTANCE_NAME` to represent the name of the service used in stats collection
+   3. Set `STATS_WRITE_FLAG` to either ON or OFF to enable/disable stats collection
+        Stats collection pushes measurements to an InfluxDB endppint.
+        If `STATS_WRITE_FLAG=ON` , you'll need to specify values for `INFLUX_URL` and `INFLUX_TOKEN`
 
-     Change the `WALLCLOCK_SERVICE_WS_URL` field values in `docker-compose.yml` to point to the correct endpoint for the WallClock service. The WallClock-Service websocket endpoint is exposed at `ws://<YOUR_MACHINE_IP>:6676`.
+      ```
+      INFLUX_URL="http://localhost:9999"
+      INFLUX_TOKEN="<a secret token>"
+      ```
 
-     You can change the port mappings from the containerised services to your host device here, if you have port collisions.
-
-3. If using influxdb to collect metrics, set `INFLUX_URL` and `INFLUX_TOKEN`:
-   ```
-   export INFLUX_URL="http://localhost:9999"
-   export INFLUX_TOKEN="<a secret token>"
-   ```
-
-4. Build microservice images and instantiate containers using the **docker-compose** tool.
+3. Build microservice images and instantiate containers using the **docker-compose** tool.
 
     The `docker-compose.yml` YAML file specifies the microservices in the cloud-sync service:
     1. WallClock service
@@ -101,6 +104,11 @@ The resulting JS client library is placed in `dist/browser/Cloud-SyncKit.js`.
 
     $ ./start_service.sh
 
+  If using a different `.env` file, you can run the service as follows:
+
+    $  docker-compose --env-file ./.env_test up
+
+
 4. Check that your containers have started successfully and are discoverable:
 
     Open the web UI at this URL in your browser: `http://<YOUR_MACHINE_IP>:8500/`
@@ -116,7 +124,7 @@ The resulting JS client library is placed in `dist/browser/Cloud-SyncKit.js`.
     
         If video does not start playing, check if these config settings are correct: 
         - the `WALLCLOCK_SERVICE_WS_URL` fields in `docker-compose.yml` are set to point to the correct WallClock service endpoint
-        - the client config file `examples/synchronisedvideo/config/config.js` contains teh correct URL for the Sync-Service endpoint.
+        - the client config file `examples/synchronisedvideo/config/config.js` contains the correct URL for the Sync-Service endpoint.
   
    4. Open another client.  When the video starts to play, click on the **share** button on the video scrubber to
      - start another instance of the demo app in another window
