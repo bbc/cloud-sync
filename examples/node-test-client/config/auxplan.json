@@ -27,6 +27,10 @@
 		{
 			"name" : "send_devices_query",
 			"time_secs" :45.0
+		},
+		{
+			"name" : "stop_exit",
+			"time_secs" : 130.0
 		}
 	]
 }

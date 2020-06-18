@@ -66,6 +66,10 @@
 		{
 			"name" : "play",
 			"time_secs" :100.0
+		},
+		{
+			"name" : "stop_exit",
+			"time_secs" : 150.0
 		}
 	]
 }

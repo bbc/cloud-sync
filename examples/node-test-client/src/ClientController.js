@@ -183,6 +183,10 @@ function scheduleAllOtherJobs()
 			case "send_devices_query":
 				setTimeout(getAvailableDevices.bind(self), action.time_secs * 1000);
 					break;
+
+			case "stop_exit":
+				setTimeout(stopAndExit.bind(self), action.time_secs * 1000);
+				break;
             default:
                 break;
         }
@@ -289,6 +293,14 @@ function getAvailableDevices () {
 		console.log(error(e)); 
 	});
 }
+
+
+function stopAndExit()
+{
+	this.stop();
+	process.exit();
+}
+
 
 // ---------------------------------------------------------
 //  Callback (private) methods
