@@ -1,0 +1,9 @@
+{
+	"testid" : "test1",
+	"clientid" : "loadtestclient1",
+    "numclients" : 50,
+	"checkpoints" : ["check1", "check2" , "check3"],
+	"checkpoint" : "check1",
+	"timestamp": ""
+
+}
