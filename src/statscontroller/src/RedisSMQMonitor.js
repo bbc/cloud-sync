@@ -41,7 +41,7 @@ function RedisSMQStats(config = {}) {
                 client.subscribe('stats');
                 client.on('message', (channel, message) => {
 					const json = JSON.parse(message);
-					console.log(message);
+					// console.log(message);
 				});
 				cb && cb();
             });
