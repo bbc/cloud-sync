@@ -106,7 +106,7 @@ The resulting JS client library is placed in `dist/browser/Cloud-SyncKit.js`.
 
   If using a different `.env` file, you can run the service as follows:
 
-    $  docker-compose --env-file ./.env_test up
+    $  docker-compose -f docker-compose-local.yml --env-file ./.env_local up
 
 
 4. Check that your containers have started successfully and are discoverable:
