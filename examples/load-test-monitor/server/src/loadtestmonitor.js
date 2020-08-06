@@ -9,7 +9,7 @@ const TestInfo = require("./TestInfo");
 const Url = require('url');
 
 const LOAD_TEST_TOPIC = "/cloudsync/loadtest"
-const CLIENT_REFRESH_INTERVAL_MS = 250;
+const CLIENT_REFRESH_INTERVAL_MS = 5000;
 
 var PRIVATE = new WeakMap();
 
@@ -49,6 +49,15 @@ class LoadTestMonitor{
 		priv.logger.info("Stopped LoadTestMonitor.");
 	}
 
+	printTestProgress()
+	{
+		var priv = PRIVATE.get(this);
+		priv.logger.info("Tests progress:");
+
+
+
+	}
+
 }
 
 
@@ -61,14 +70,9 @@ function setUpMonitor()
 	var self = this;
 	var priv = PRIVATE.get(this);
 
-	priv.logger.debug("connecting to mqtt endpoint " + priv.config.mqttbroker + ":" + priv.config.mqttport);
+	priv.logger.info("connecting to mqtt endpoint " + priv.config.mqttbroker);
 
 	connectToMQTTBroker.call(self); 
-
-
-
-
-
 }
 
 // ---------------------------------------------------------
@@ -121,8 +125,7 @@ function onConnect () {
 
 	priv.senderTimer = setTimeout(() => {
 		
-		let testStatsObj =  
-
+		this.printTestProgress();
 
 	}, CLIENT_REFRESH_INTERVAL_MS);
 
@@ -158,6 +161,7 @@ function handleMessage (topic, message) {
 
 	if ((typeof testid !== "undefined") && (testid !== null))
 	{
+		// get data structure for this testcase, create one if none
 		let testobj = priv.tests.get(testid);
 		if ((typeof testobj === "undefined") || (testobj === null))
 		{
@@ -165,37 +169,43 @@ function handleMessage (topic, message) {
 			priv.tests.set(testid, testobj);
 		}
 
-		if (((typeof testobj.numclients === "undefined") || (testobj.numclients === null))
-			&& ((typeof msg.numclients !== "undefined") && (msg.numclients !== null))
+		// update numClients field
+		if (((typeof testobj.numClients === "undefined") || (testobj.numClients === null))
+			&& ((typeof msg.numClients !== "undefined") && (msg.numClients !== null))
 			)
 		{
-			testobj.numclients =  msg.numclients;
+			testobj.numClients =  msg.numClients;
 		}
 
-		if ((testobj.checkpoints.length === 0)
-			&& ((typeof msg.checkpoints !== "undefined") && (msg.checkpoints !== null))
-			)
+		// update checkpoints progress Map
+
+		if ((typeof msg.checkpoint !== "undefined") && (msg.checkpoint !== null))
 		{
-			testobj.checkpoints = Array.from(msg.checkpoints);
+			// record the checkpoint a client has sent message about
+			// get the checkpoint object for the checkpoint
+			let checkpointObj = testobj.checkpoints.get(msg.checkpoint);
+			
+			if (checkpointObj !== null)
+			{
+				// add client id to checkpoint object's client array
+				if ((typeof checkpointObj.clients  === "undefined") || (checkpointObj.clients  === null))
+				{
+					checkpointObj.clients = new Set();
+				}
+
+				if (!checkpointObj.clients.has(msg.clientid))
+				{
+					checkpointObj.clients.add(msg.clientid);
+					checkpointObj.lastClient = msg.clientid;
+				}				
+				priv.logger.info("Test " + msg.testid + ": Client " + msg.clientid + " passed checkpoint " + msg.checkpoint);
+				priv.logger.info("Test " + msg.testid + ": " + checkpointObj.clients.size + " passed checkpoint " + msg.checkpoint);
+			}
 		}
-
-		// now process the checkpoint notification
-		if ((typeof message.checkpoint !== "undefined") || (message.checkpoint !== null))
-		{
-			if (!testobj.checkpoints.includes(message.checkpoint))
-			{
-				testobj.checkpoints.push(message.checkpoint);
-			}
-
-			if  (!testobj.checkpointProgressMap.has(message.checkpoint))
-			{
-				testobj.checkpointProgressMap.set(message.checkpoint, 0);
-			}
-			let val = testobj.checkpointProgressMap.get(message.checkpoint);
-			val++;		
-		} 
 	}
 }
+
+
 
 
 
