@@ -77,18 +77,13 @@ try {
     {
         options.loglevel = options.verbose ? "development" : "info";
         logger = Logger.getNewInstance(options.loglevel, "cloudsynctestmonitor");
-        
-        if ((typeof  options.mqttbroker === "undefined") || (  options.mqttbroker === null))
-        {
-            throw "Missing parameter: --mqttbroker (-m) --port (-p)";
-        } 
-              
+                      
         config.mqttbroker = options.mqttbroker || "ws://0.0.0.0:9001";
         config.loglevel = options.loglevel;
         process.env.loglevel = options.loglevel;
         
         logger.info("running node app with these params: ");
-        console.log(config)
+        console.log(config);
 
         monitor = new LoadTestMonitor(config);
         monitor.start();
