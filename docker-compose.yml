@@ -29,6 +29,7 @@ services:
       - "9001:9001"
     volumes:
       - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./mosquitto/log/:/mosquitto/log/
     depends_on:
       - registrator
     labels:
