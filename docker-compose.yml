@@ -84,6 +84,13 @@ services:
       2immerse:
         aliases:
           - wallclock-service.service.consul
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6675"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
 
   sessioncontroller:
     build:
@@ -106,7 +113,7 @@ services:
       WALLCLOCK_SERVICE_WS_URL:  ${WALLCLOCK_SERVICE_WS_URL}
       ENABLE_INFLUX_DB_WRITE: ${STATS_WRITE_FLAG}
       CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
-
+    restart: unless-stopped
     networks:
       2immerse:
         aliases:
@@ -118,7 +125,7 @@ services:
       dockerfile: synccontroller/Dockerfile
     image: synccontroller
     ports:
-      - "3002"
+      - 3002:3002
     command: npm start
     volumes:
       - ./src/synccontroller/src:/usr/src/synccontroller/src
@@ -134,7 +141,7 @@ services:
       WALLCLOCK_SERVICE_WS_URL: ${WALLCLOCK_SERVICE_WS_URL}
       ENABLE_INFLUX_DB_WRITE: ${STATS_WRITE_FLAG}
       CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
-
+    restart: unless-stopped
     networks:
       2immerse:
         aliases:
@@ -166,7 +173,7 @@ services:
         CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
         INFLUX_URL: "${INFLUX_URL}"
         INFLUX_TOKEN: "${INFLUX_TOKEN}"
-
+    restart: unless-stopped
     networks:
       2immerse:
         aliases:
@@ -187,6 +194,7 @@ services:
         CONSUL_URL: localhost:8500
         ENABLE_INFLUX_DB_WRITE: ${STATS_WRITE_FLAG}
         CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
+    restart: unless-stopped
     networks:
       2immerse:
         aliases:
