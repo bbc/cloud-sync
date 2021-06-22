@@ -1,4 +1,4 @@
-FROM node:8
+FROM node:10
 MAINTAINER Rajiv Ramdhany "rajiv.ramdhany@bbc.co.uk"
 
 LABEL version="2.0.0"
@@ -9,7 +9,7 @@ synthesise the state for the synchronisation timeline. The asynchrony reduction 
 # update npm to v5.3.0
 RUN rm -rf /usr/local/lib/node_modules/npm \
   && mkdir /usr/local/lib/node_modules/npm \
-  && curl -sL https://github.com/npm/npm/archive/v5.3.0.tar.gz | tar xz -C /usr/local/lib/node_modules/npm --strip-components=1 \
+  && curl -sL https://github.com/npm/npm/archive/v6.0.0.tar.gz | tar xz -C /usr/local/lib/node_modules/npm --strip-components=1 \
   && npm --version
 
 
