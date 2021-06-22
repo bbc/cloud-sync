@@ -34,7 +34,7 @@ window.addEventListener("load", init);
 
 
 function init() {
-    document.getElementsByTagName("source")[0].src = util.getUrlParameter("video") || "http://hbbtv-live.irt.de/2immerse/video.mp4";
+    document.getElementsByTagName("source")[0].src = util.getUrlParameter("video") || "https://object.lon1.bbcis.uk:7980/v1/AUTH_45f80c87e09c481ca217ba350a6b22ef/cloud-sync-test-videos/video.50fps_7bitseq_854x480pixels.mp4";
 
     sessionInfo.sessionId = util.getUrlParameter("sessionId");
     sessionInfo.contextId = util.getUrlParameter("contextId");
