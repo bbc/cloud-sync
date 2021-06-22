@@ -27,7 +27,7 @@
     "inherits": "^2.0.1",
     "js-object-clone": "^0.4.2",
     "request": "^2.74.0",
-    "dvbcss-protocols": "^0.0.2",
+    "dvbcss-protocols": "^0.0.4",
     "weakmap": "0.0.6",
     "ws": "^1.1.1"
   },
