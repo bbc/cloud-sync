@@ -119,7 +119,7 @@ services:
       dockerfile: synccontroller/Dockerfile
     image: synccontroller
     ports:
-      - 3002:3002
+      - "3002"
     command: npm start
     volumes:
       - ./src/synccontroller/src:/usr/src/synccontroller/src
