@@ -1,26 +1,5 @@
-version: '2'
+
 services:
-  # Consul
-  consul:
-    image: gliderlabs/consul-server:latest
-    command: "-server -bootstrap"
-    ports:
-      - 80:8500
-    networks:
-      2immerse:
-        aliases:
-          - consul.service.consul
-
-  registrator:
-    image: gliderlabs/registrator:v7
-    command: "consul://consul:8500"
-    depends_on:
-      - consul
-    volumes:
-      - "/var/run/docker.sock:/tmp/docker.sock"
-    networks:
-      - 2immerse
-
   telegraf:
     image: telegraf
     environment:
@@ -33,9 +12,9 @@ services:
     labels:
       - "SERVICE_NAME=telegraf"
     networks:
-      2immerse:
+      cloudsync-net:
         aliases:
-          - telegraf.service.consul
+          - telegraf.service
 
   wallclockservice:
     build: ./wallclock-service
@@ -46,14 +25,12 @@ services:
       - "6675:80"
     labels:
       - "SERVICE_NAME=wallclock-service"
-    depends_on:
-      - registrator
     networks:
-      2immerse:
+      cloudsync-net:
         aliases:
-          - wallclock-service.service.consul
+          - wallclock-service.service
     restart: unless-stopped
 
 networks:
-  2immerse:
+  cloudsync-net:
     driver: bridge
