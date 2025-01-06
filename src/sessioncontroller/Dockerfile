@@ -1,16 +1,8 @@
-FROM node:10
-MAINTAINER Rajiv Ramdhany "rajiv.ramdhany@bbc.co.uk"
+FROM node:12.22.12
 
 LABEL version="2.0.0"
 LABEL description="This service provide session management functions to the Sync Service and handles \
 requests from clients"
-
-# update npm to v5.3.0
-RUN rm -rf /usr/local/lib/node_modules/npm \
-  && mkdir /usr/local/lib/node_modules/npm \
-  && curl -sL https://github.com/npm/npm/archive/v6.0.0.tar.gz | tar xz -C /usr/local/lib/node_modules/npm --strip-components=1 \
-  && npm --version
-
 
 # Create service directory
 RUN mkdir -p /usr/src/common
