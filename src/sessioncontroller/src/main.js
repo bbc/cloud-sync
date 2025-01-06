@@ -15,40 +15,39 @@
 /****************************************************************************/
 
 
+
 // ---------------------------------------------------------
 //  Imports
 // ---------------------------------------------------------
 var commandLineArgs = require("command-line-args");
-var SessionController = require("./MTenantSessionController");
+var SessionController = require("./sessioncontrollerimpl");
 const Logger = require("./logger");
 const url = require("url");
+const dns = require("dns");
+const dnsPromises = dns.promises;
+
 
 
 // ---------------------------------------------------------
 //  Local state
 // ---------------------------------------------------------
-var consulClient;	// consul client instance
 var sController; 	// session controller
 
 /**
  * names of services to use for service lookup (partial matching supported)
  */
 var config = {
-	consulURL: undefined,
-	wallclockservice_ws: { name: "wallclock", port: 6676 },
-	wallclockservice_udp: { name: "wallclock", port: 6677 },
+	wallclockservice_ws: { name: "wallclock-service", port: 6676 },
+	wallclockservice_udp: { name: "wallclock-service", port: 6677 },
 	mqttbroker: { name: "mqttbroker", port: 1883 },
 	redis: { name: "redis"}
 };
 
-/**
- * Discovered services from Consul after pattern match 
- */
-var consulServiceNames = {
-	wallclockservice_udp: undefined,
-	wallclockservice_ws: undefined,
-	mqttbroker: undefined,
-	redis: undefined
+config.currentDir =  process.env.SRC_DIR || process.cwd();
+
+const dns_options = {
+  family: 4,
+  hints: dns.ADDRCONFIG | dns.V4MAPPED,
 };
 
 /**
@@ -66,182 +65,32 @@ var services = {
 //  Service discovery 
 // ---------------------------------------------------------
 
-Promise.retry = function(fn, args, times, delay) {
-	return new Promise(function(resolve, reject){
-		var error;
-		var attempt = function() {
-			if (times == 0) {
-				reject(error);
-			} else {
-				fn(args).then(resolve).catch(
-					function (e) {
-						times--;
-						error = e;
-						setTimeout(function () { attempt(); }, delay);
-					}
-				);
-			}
-		};
-		attempt();
-	});
-};
+async function retryDnsLookup(hostname, options = {}) {
+    const { retries = 50, delay = 500 } = options;
 
-// ---------------------------------------------------------
-
-function lookupServiceName(name, port){
-
-	return new Promise((resolve, reject)=>{
-
-		consulClient.catalog.service.list((err, res)=>{
-			if (err) reject(err);
-			else { 
-				var services = Object.keys(res);
-				// console.log(services);
-				const s = services.find(service => { 
-
-					if (typeof port !== "undefined")
-						return (service.includes(name) && service.includes(port));
-					else{
-						// console.log(service);
-						// console.log(name);
-						// console.log(service.includes(name));
-						return service.includes(name);
-					}
-							
-				} );
-				if (typeof s === "undefined")
-					reject(null);
-				else
-					resolve(s);
-			}
-		});
-	});	
+    for (let i = 0; i < retries; i++) {
+      try {
+        const result = await dnsPromises.lookup(hostname, dns_options);
+        return result;
+      } catch (error) {
+        if (i < retries - 1) {
+          console.warn(`DNS lookup failed for ${hostname} (attempt ${i + 1}). Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          throw error; // Rethrow the error after all retries have failed
+        }
+      }
+    }
 }
 
-// ---------------------------------------------------------
-
-/**
- * Discover a service host address and port number using a connected Consul service client
- * @param {Consul} consul a consul client created using {@link https://www.npmjs.com/package/consul|node-consul} library 
- * @param {string} serviceName 
- * @returns {Object} an anonymous object with properties: host and port
- */
-function discoverService(serviceName)
+async function serviceHostLookUp(serviceName, options = {})
 {
-
-	return new Promise(function(resolve, reject) {
-
-		consulClient.catalog.service.nodes(serviceName, function(err, serviceNodes) {
-						
-			if (err){
-				logger.info("Query for service " + serviceName + " failed.");
-				reject(err);
-			}
-		
-			else if (serviceNodes.length==0) {
-				logger.info("no service registration for " + serviceName);
-				reject(new Error("No service registration for " + serviceName));
-			}
-		
-			else if ((typeof serviceNodes !== "undefined") && (serviceNodes.length > 0)) {
-				var serviceEndpoint = { port: serviceNodes[0].ServicePort, host: serviceNodes[0].ServiceAddress};
-				logger.info("Discovered ", serviceName, " : ", JSON.stringify(serviceEndpoint));
-				resolve(serviceEndpoint);
-			}
-		});
-	});
+	return retryDnsLookup(serviceName, options);
 }
-
-
 
 // ---------------------------------------------------------
 //  Start controller
 // ---------------------------------------------------------
-var logger;
-var optionDefinitions = [
-	{ name: "keepalive", alias: "k", type: Number, defaultValue: 10000 },
-	{ name: "consul", alias: "c", type: String },
-	{ name: "loglevel", alias: "l", type: String, defaultValue: "development" }
-];
-
-
-try {
-	var options = commandLineArgs(optionDefinitions);
-	logger = Logger.getNewInstance(options.loglevel, "sessioncontroller");
-
-	// config
-	config.consulURL = options.consul;
-	config.loglevel = options.loglevel;
-	process.env.loglevel = options.loglevel;	
-	
-	const c = url.parse(config.consulURL);
-	var consulOpt = {
-		host: c.hostname,
-		port: c.port
-	};
-	logger.debug("consul: ", consulOpt);
-
-
-	consulClient = require("consul")(consulOpt);
-	if (typeof consulClient === "undefined") {
-		throw("Error connecting to Consul on " + consulOpt.host + ":" + consulOpt.port);
-	}
-
-	lookupServiceName(config.wallclockservice_ws.name, config.wallclockservice_ws.port).then(
-		function(serviceName){
-			// console.log(serviceName);
-			consulServiceNames.wallclockservice_ws = serviceName;
-			return discoverService(consulServiceNames.wallclockservice_ws );
-		}, function(err){
-			logger.error("No wallclock WS services found. ", err );
-		}
-	).catch(function() {
-		return Promise.retry(discoverService, consulServiceNames.wallclockservice_ws , 3, 2000);
-	}).then(function(result){
-		services.wallclockservice_ws = result;
-		logger.info("Discovered Wallclock Service " + JSON.stringify(services.wallclockservice_ws));
-		return lookupServiceName(config.mqttbroker.name, config.mqttbroker.port);
-	}).then(
-		function(serviceName){
-			// console.log(serviceName);
-			consulServiceNames.mqttbroker = serviceName;
-			return discoverService(consulServiceNames.mqttbroker );
-		}, function(err){
-			logger.error("No ", config.mqttbroker.name, " services found.", err);
-		}
-	).catch(function() {
-		return Promise.retry(discoverService, consulServiceNames.mqttbroker , 3, 2000);
-	}).then(function(result){
-		services.mqttbroker = result;
-		logger.info("Discovered mqttbroker service " + JSON.stringify(services.mqttbroker));
-		return lookupServiceName(config.redis.name, config.redis.port);
-	}).then(
-		function(serviceName){
-			// console.log("******", serviceName);
-			consulServiceNames.redis = serviceName;
-			return discoverService(consulServiceNames.redis );
-		}, function(err){
-			logger.error("No ", config.redis.name, " services found. ", err);
-		}
-	).catch(function() {
-		return Promise.retry(discoverService, consulServiceNames.mqttbroker , 3, 2000);
-	}).then(function(result){
-		services.redis = result;
-		logger.info("Discovered redis service " + JSON.stringify(services.redis));
-		// console.log(services);
-
-			
-		setUpController(services);
-		// CRTL-C handler
-		process.on("SIGINT", function() {
-			sController.stop();
-			process.exit();
-		});
-	});
-	
-} catch (e) {
-	logger.error(e);
-}
 
 // ---------------------------------------------------------
 
@@ -249,12 +98,67 @@ try {
  * 
  * @param {object} services service endpoints See services object definition.
  */
-function setUpController(services)
+async function setUpController(services, logger)
 {
-	sController = new SessionController(services, config);
-	sController.start().then((result)=>{
-		logger.info("Multi-tenant Session Controller started. ", result);
-	});
+	try {
+		sController = new SessionController(services, config);
+		await sController.start();
+		logger.info("Session Controller started. ");
+	} catch (error) {
+		logger.error(error);
+	}
 }
 
 // ---------------------------------------------------------
+
+async function main()
+{
+	var logger;
+	var optionDefinitions = [
+		{ name: "keepalive", alias: "k", type: Number, defaultValue: 10000 },
+		{ name: "retries", alias: "r", type: Number, defaultValue: 20 },
+		{ name: "loglevel", alias: "l", type: String, defaultValue: "development" }
+	];
+
+	try {
+		var options = commandLineArgs(optionDefinitions);
+		logger = Logger.getNewInstance(options.loglevel, "sessioncontroller");
+
+		// config
+		config.loglevel = options.loglevel;
+		process.env.loglevel = options.loglevel;
+
+		// discover local Wallclock service
+		const wallclockservice = await serviceHostLookUp(config.wallclockservice_ws.name, {retries:  50, delay: 500});
+		services.wallclockservice_ws = {host: wallclockservice.address, port:config.wallclockservice_ws.port};
+		services.wallclockservice_udp = {host: wallclockservice.address, port:config.wallclockservice_udp.port};
+		logger.info("Discovered Wallclock Service " + JSON.stringify(services.wallclockservice_ws));
+
+		// discover MQTT Broker 
+		const mqttbroker = await serviceHostLookUp(config.mqttbroker.name, {retries:  50, delay: 500});
+		services.mqttbroker = {host: mqttbroker.address, port:config.mqttbroker.port};
+		logger.info("Discovered mqttbroker service " + JSON.stringify(services.mqttbroker));
+
+		// discover Redis service
+		const redis = await serviceHostLookUp(config.redis.name, {retries:  50, delay: 500});
+		services.redis = {host: redis.address, port:config.redis.port};
+		logger.info("Discovered redis service " + JSON.stringify(services.redis));
+			
+		setUpController(services, logger);
+		// CRTL-C handler
+		process.on("SIGINT", function() {
+			sController.stop();
+			process.exit();
+		});
+
+		
+	} catch (e) {
+		logger.error(e);
+	}
+}
+
+
+main();
+
+
+

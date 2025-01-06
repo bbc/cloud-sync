@@ -1,6 +1,6 @@
 /****************************************************************************
-/* FILE:                MTenantSessionController.js                			*/
-/* DESCRIPTION:         class for a multi-tenant Session Controller         */
+/* FILE:                SessionControllerImpl.js                			*/
+/* DESCRIPTION:         class for Session Controller         */
 /* VERSION:             (see git)                                       	*/
 /* DATE:                (see git)                                       	*/
 /* AUTHOR:              Rajiv Ramdhany <rajiv.ramdhany@bbc.co.uk>    		*/
@@ -48,12 +48,12 @@ const kSessionRESPTopic = "Sessions/RESP";
 const kSessionLastWillTopic = "Sessions/lastwill";
 
 // ---------------------------------------------------------
-//  MTenantSessionController class
+//  SessionControllerImpl class
 // ---------------------------------------------------------
 /**
- * @class MTenantSessionController
+ * @class SessionControllerImpl
  */
-class MTenantSessionController{
+class SessionControllerImpl{
 
 	/**
 	 * 
@@ -111,7 +111,8 @@ class MTenantSessionController{
 			priv.syncCrtlQProducer.shutdown();
 		}
 		
-		logger.info("stopped listening to channels");
+		logger.info("SessionController stopped listening to MQTT topics.");
+		logger.info("SessionController stopped.");
 	}
 
 	// ---------------------------------------------------------
@@ -119,7 +120,7 @@ class MTenantSessionController{
 }
 
 // ---------------------------------------------------------
-//  MTenantSessionController class private methods
+//  SessionControllerImpl class private methods
 // ---------------------------------------------------------
 
 /**
@@ -1112,5 +1113,5 @@ function firstInSequence(values, asyncFn) {
 
 // ---------------------------------------------------------
 
-module.exports =  MTenantSessionController;
+module.exports =  SessionControllerImpl;
 	
