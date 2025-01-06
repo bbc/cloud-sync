@@ -1,8 +1,9 @@
 package uk.co.bbc.rd.TimelineObserver;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -16,10 +17,6 @@ import java.util.logging.SimpleFormatter;
 
 import com.nurkiewicz.asyncretry.AsyncRetryExecutor;
 import com.nurkiewicz.asyncretry.RetryExecutor;
-import com.orbitz.consul.CatalogClient;
-import com.orbitz.consul.Consul;
-import com.orbitz.consul.model.ConsulResponse;
-import com.orbitz.consul.model.catalog.CatalogService;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -29,8 +26,6 @@ import redis.clients.jedis.JedisPool;
 
 public class TimelineObserver 
 {
-	private String serviceRegistryAddr;
-	private Consul consul;
 	/* Logger */
 	private static Logger logger = null;
 	
@@ -55,15 +50,13 @@ public class TimelineObserver
 	}
 	
 	private String brokerServiceName;
-	private String brokerLookUpName;
-	private int brokerLookUpPort;
-	
-	private CatalogService brokerService;
+	private int brokerPort;
+	private InetAddress brokerServiceAddr;
 	private List<String> brokerTopics;
 	
 	private String dbServiceName;
-	private String redisLookUpName;
-	private int redisLookUpPort;
+	private int dbServicePort; 
+	private InetAddress dbServiceAddr;
 	private BlockingQueue<Observation> internalQueue;
 	
 	private JedisPool jedisPool;
@@ -81,28 +74,27 @@ public class TimelineObserver
 	// ---------------------------------------------------------------------------------------------------
 	/**
 	 * Constructor
-	 * @param serviceRegistryAddr Consul server address
 	 * @param brokerServiceName broker service name
 	 * @param dbServiceName database service name
 	 * @param brokerTopics list of topic names/filters to read messages from
 	 */
-	public TimelineObserver(String serviceRegistryAddr, String brokerName, int brokerPort, String dbServiceName, List<String> brokerTopics) {
+	public TimelineObserver(String brokerName, int brokerPort, String dbServiceName, int dbServicePort, List<String> brokerTopics) {
 		super();
-		this.serviceRegistryAddr = serviceRegistryAddr;
-		this.brokerLookUpName = brokerName;
-		this.brokerLookUpPort = brokerPort;
-		this.redisLookUpName = dbServiceName;
+		this.brokerServiceName = brokerName;
+		this.brokerPort = brokerPort;
+		this.dbServiceName = dbServiceName;
+		this.dbServicePort = dbServicePort;
 		this.brokerTopics = brokerTopics;
 		this.internalQueue = new LinkedBlockingQueue<>();
 	}
 	
 	
-	public TimelineObserver(String serviceRegistryAddr, String brokerName, int brokerPort, String dbServiceName, List<String> brokerTopics, String servicesHostAddr) {
+	public TimelineObserver(String brokerName, int brokerPort, String dbServiceName, int dbServicePort, List<String> brokerTopics, String servicesHostAddr) {
 		super();
-		this.serviceRegistryAddr = serviceRegistryAddr;
-		this.brokerLookUpName = brokerName;
-		this.brokerLookUpPort = brokerPort;
-		this.redisLookUpName = dbServiceName;
+		this.brokerServiceName = brokerName;
+		this.brokerPort = brokerPort;
+		this.dbServiceName = dbServiceName;
+		this.dbServicePort = dbServicePort;
 		this.brokerTopics = brokerTopics;
 		this.internalQueue = new LinkedBlockingQueue<>();
 		this.servicesHost = servicesHostAddr;
@@ -111,88 +103,52 @@ public class TimelineObserver
 	
 	// ---------------------------------------------------------------------------------------------------
 
-	private String lookupServiceName(Consul consulClient, String name, int port) throws TimelineObserverException
-	{
-		String serviceName = null;
-		
-		CatalogClient catalogClient = consulClient.catalogClient();
 
-		logger.info("Looking up service " + name);
-		
-		ConsulResponse<Map<String,List<String>>> response = catalogClient.getServices();
-		
-		Map<String,List<String>> servicesMap = response.getResponse();
-		
-		
-		for (String key : servicesMap.keySet()) {
-//			logger.info(key);
-			
-			if (port !=0)
-			{
-				if (key.contains(name) && key.contains(new Integer(port).toString())) {
-					serviceName = key;
-				}
-			}else
-			{
-				if (key.contains(name)) {
-					serviceName = key;
-				}
-			}			
-		}
-		
-		return serviceName;
-	}
-	
-	
-	public CompletableFuture<String> lookupServiceAsync(Consul consulClient, String name, int port) 
-	{
-		ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-		RetryExecutor executor = new AsyncRetryExecutor(scheduler).
-				retryOn(TimelineObserverException.class).
-				withExponentialBackoff(500, 1).     //500ms times 2 after each retry
-				withMaxDelay(10_000).               //10 seconds
-				withUniformJitter().                //add between +/- 100 ms randomly
-				withMaxRetries(10);
-
-		return executor.getWithRetry(() ->lookupServiceName(consulClient, name, port));
-	}
 	
 	// ---------------------------------------------------------------------------------------------------
 	
 	/**
-	 * Discover a service endpoint from Consul in an async manner; supports retries
+	 * Discover a service endpoint from DNS in an async manner; supports retries
 	 * @param serviceName
 	 * @return service endpoint address
 	 * @throws TimelineObserverException
 	 */
-	public CatalogService discoverService(Consul consulClient, String serviceName) throws TimelineObserverException
+	public InetAddress discoverService(String serviceName) throws TimelineObserverException
 	{
-		CatalogClient catalogClient = consulClient.catalogClient();
+		InetAddress serviceAddress = null;
 
-		logger.info("Looking up " + serviceName + " endpoint ...");
-		ConsulResponse<List<CatalogService>> response = catalogClient.getService(serviceName);
+		try {
+			InetAddress[] serviceAddresses = InetAddress.getAllByName(serviceName);
 
-		List<CatalogService> catServiceList = response.getResponse();
+			if (serviceAddresses.length > 0)
+			{
+				serviceAddress =  serviceAddresses[0];
+			}
+			
+			return serviceAddress;
+			
+		} catch (Exception e) {
 
-		if (catServiceList.size() > 0) {
-
-			CatalogService service = catServiceList.get(0);
-//			logger.info("found : " + service.getServiceAddress() + ":" + service.getServicePort() );
-			return service;
-
-		}else
-			throw new TimelineObserverException(TimelineObserverException.SERVICE_NOT_FOUND);
+			if (e instanceof UnknownHostException)
+			{
+				throw new TimelineObserverException(TimelineObserverException.SERVICE_NOT_FOUND, "Service " + serviceName + " not found." );
+			}
+			else
+			{
+				logger.warning("Error on service DNS lookup for " + serviceName + ": " + e.getMessage());
+				return serviceAddress;
+			}
+		}
 	}
 
 	// ---------------------------------------------------------------------------------------------------
 	
 	/**
-	 * Asynchronous discover operation
-	 * @param consulClient
+	 * Asynchronous discovery operation
 	 * @param serviceName
 	 * @return a {@link CompletableFuture} object
 	 */
-	public CompletableFuture<CatalogService> discoverServiceAsync(Consul consulClient, String serviceName) 
+	public CompletableFuture<InetAddress> discoverServiceAsync(String serviceName) 
 	{
 		ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 		RetryExecutor executor = new AsyncRetryExecutor(scheduler).
@@ -200,9 +156,9 @@ public class TimelineObserver
 				withExponentialBackoff(500, 1).     //500ms times 2 after each retry
 				withMaxDelay(10_000).               //10 seconds
 				withUniformJitter().                //add between +/- 100 ms randomly
-				withMaxRetries(10);
+				withMaxRetries(20);
 
-		return executor.getWithRetry(() ->discoverService(consulClient, serviceName));
+		return executor.getWithRetry(() ->discoverService(serviceName));
 	}
 	
 	// ---------------------------------------------------------------------------------------------------
@@ -217,65 +173,71 @@ public class TimelineObserver
 	 */
 	public void start()
 	{
-		// create a consul client
-		consul = Consul.builder().withUrl("http://" + this.serviceRegistryAddr).build();
-		
-		// discover service endpoints
+		try {
+
+			// discover service endpoints
 		ExecutorService exec = Executors.newCachedThreadPool();
-		
-		CompletableFuture<String>lookUpBrokerServiceNameFuture = CompletableFuture.supplyAsync(()->{
-			try {
-				return lookupServiceName(consul, brokerLookUpName, brokerLookUpPort);
-			} catch (TimelineObserverException e) {
-				return null;
-			}
-		},exec);
-		
-		CompletableFuture<CatalogService> msgBrokerDiscoveryFuture = lookUpBrokerServiceNameFuture.thenComposeAsync((brokerServiceName)->{
-			this.brokerServiceName = brokerServiceName;
-			return discoverServiceAsync(consul, brokerServiceName);
-		},exec);
-		
-		
-		CompletableFuture<String> lookUpDBServiceNameFuture = msgBrokerDiscoveryFuture.thenComposeAsync((brokerService)->{
-			this.brokerService = brokerService;
-			logger.info("Found " + brokerService.getServiceName() + " service: " +  brokerService.getServiceAddress() + ":"+brokerService.getServicePort());
-			return lookupServiceAsync(consul,redisLookUpName, redisLookUpPort);
-		},exec);
-		
-		CompletableFuture<CatalogService> dbDiscoveryFuture = lookUpDBServiceNameFuture.thenComposeAsync((redisServiceName)->{
+
+		CompletableFuture<InetAddress> msgBrokerDiscoveryFuture = discoverServiceAsync(this.brokerServiceName);
+
+		CompletableFuture<InetAddress> dbDiscoveryFuture = msgBrokerDiscoveryFuture.thenComposeAsync((brokerAddr)->{
 			
-			this.dbServiceName = redisServiceName;
-			return discoverServiceAsync(consul, dbServiceName);
+			this.brokerServiceAddr = brokerAddr;
+			if (brokerAddr != null)
+			{
+				logger.info("Resolved " + this.brokerServiceName + " service: " +  this.brokerServiceAddr.getHostAddress() + ":" + brokerPort);
+			}
+			else
+			{
+				logger.warning("Error discovering broker endpoint.");
+			}
+						
+			return discoverServiceAsync(dbServiceName);						
 		}, exec);
 
-		CompletableFuture<Void> startFuture = dbDiscoveryFuture.thenAcceptAsync((dbService)->{
 
-			logger.info("Found " + dbService.getServiceName() + " service: " +  dbService.getServiceAddress() + ":" + dbService.getServicePort());
-			
-			jedisPool = new JedisPool( servicesHost !=null ? servicesHost : dbService.getServiceAddress(), dbService.getServicePort());
-			
-			logger.info("DB client connection setup... done.");
-			Jedis redisClient = jedisPool.getResource();
+		CompletableFuture<Void> startFuture = dbDiscoveryFuture.thenAcceptAsync((redisAddr)->{
 
-			ExecutorService executorService = Executors.newFixedThreadPool(1);
-			ObservationReader reader = new ObservationReader(servicesHost !=null ? servicesHost : this.brokerService.getServiceAddress()+ ":" + this.brokerService.getServicePort(), this.brokerTopics, this.internalQueue);
-			executorService.execute(reader);
-			logger.info("Observation reader setup... done.");
+			this.dbServiceAddr = redisAddr;
+
+			if (redisAddr !=null)
+			{
+				logger.info("Resolved " + dbServiceName + " service: " +  dbServiceAddr.getHostAddress() + ":" + dbServicePort);
 			
-			ExecutorService executor = Executors.newFixedThreadPool(1);
-			
-			int threadCounter = 0;
-			while (threadCounter < NUM_WRITER_THREADS) {
-	            threadCounter++;
-	            // Adding threads one by one
-	            logger.info("Starting pres-timestamp-filter thread : " + threadCounter);
-	            executor.execute(new ObservationFilter(redisClient,this.internalQueue, TimelineObserver.SYNC_CONTROLLER_WAITQUEUE));
-	        }
+				jedisPool = new JedisPool( servicesHost !=null ? servicesHost : this.dbServiceAddr.getHostAddress(), dbServicePort);
+				
+				logger.info("DB client connection setup... done.");
+				Jedis redisClient = jedisPool.getResource();
+	
+				ExecutorService executorService = Executors.newFixedThreadPool(1);
+				ObservationReader reader = new ObservationReader(servicesHost !=null ? servicesHost : this.brokerServiceAddr.getHostAddress()+ ":" + this.brokerPort, this.brokerTopics, this.internalQueue);
+				executorService.execute(reader);
+				logger.info("Observation reader setup... done.");
+				
+				ExecutorService executor = Executors.newFixedThreadPool(1);
+				
+				int threadCounter = 0;
+				while (threadCounter < NUM_WRITER_THREADS) {
+					threadCounter++;
+					// Adding threads one by one
+					logger.info("Starting pres-timestamp-filter thread : " + threadCounter);
+					executor.execute(new ObservationFilter(redisClient,this.internalQueue, TimelineObserver.SYNC_CONTROLLER_WAITQUEUE));
+				}
+			}
+			else
+			{
+				logger.warning("Error discovering Redis db endpoint.");
+			}	
 			
 		}, exec);
 		
 		startFuture.join();
+			
+		} catch (Exception e) {
+			logger.warning(e.getMessage());
+		}
+
+		
 
 	}
 	

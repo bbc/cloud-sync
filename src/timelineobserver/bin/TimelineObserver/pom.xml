@@ -29,6 +29,11 @@
 			<version>1.2.0</version>
 		</dependency>
 		<dependency>
+			<groupId>com.orbitz.consul</groupId>
+			<artifactId>consul-client</artifactId>
+			<version>1.0.1</version>
+		</dependency>
+		<dependency>
 			<groupId>com.nurkiewicz.asyncretry</groupId>
 			<artifactId>asyncretry</artifactId>
 			<version>0.0.7</version>
