@@ -2,7 +2,7 @@ FROM openjdk:8-jdk-alpine AS build
 # ---- 
 # Install Maven 
 RUN apk add --no-cache curl tar bash 
-ARG MAVEN_VERSION=3.3.9 
+ARG MAVEN_VERSION=3.9.6 
 ARG USER_HOME_DIR="/root" 
 RUN mkdir -p /usr/share/maven && \ 
     curl -fsSL http://apache.osuosl.org/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz | tar -xzC /usr/share/maven --strip-components=1 && \ 
