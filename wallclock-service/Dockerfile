@@ -1,15 +1,15 @@
-FROM node:10
-MAINTAINER Rajiv Ramdhany "rajiv.ramdhany@bbc.co.uk"
+FROM node:20.18-slim
+
 
 LABEL version="2.0.0"
 LABEL description="This service provides time synchronisation capability to clients \
 via different protocol transports e.g. UDP, WebSockets."
 
-# update npm to v5.3.0
-RUN rm -rf /usr/local/lib/node_modules/npm \
-  && mkdir /usr/local/lib/node_modules/npm \
-  && curl -sL https://github.com/npm/npm/archive/v6.0.0.tar.gz | tar xz -C /usr/local/lib/node_modules/npm --strip-components=1 \
-  && npm --version
+# # update npm to v5.3.0
+# RUN rm -rf /usr/local/lib/node_modules/npm \
+#   && mkdir /usr/local/lib/node_modules/npm \
+#   && curl -sL https://github.com/npm/npm/archive/v6.1.0.tar.gz | tar xz -C /usr/local/lib/node_modules/npm --strip-components=1 \
+#   && npm --version
 
 # Create app directory
 RUN mkdir -p /usr/src/wallclockservice
