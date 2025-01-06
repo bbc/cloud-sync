@@ -100,7 +100,7 @@ class SyncController extends Consumer
 		priv.redisClient.on("error", function (err) {
 			logger.error("Redis connection Error : " + err);
 		});
-		logger.info("connected to Redis endpoint " + JSON.stringify(config.redis));
+		logger.info("connected to Redis endpoint " + JSON.stringify(services.redis));
 
 		priv.msgAdapter = new MessagingAdapter(priv.mosquitto.host, priv.mosquitto.port, "synccontroller_" + this.id);
 		priv.msgAdapter.on("connectionestablished", handleAdapterConnected.bind(null, priv.mosquitto));
