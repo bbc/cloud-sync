@@ -35,4 +35,4 @@ package-lock.json
 
 .tscache
 *.code-workspace
-deploy/
+secrets/
