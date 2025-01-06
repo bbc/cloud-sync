@@ -36,3 +36,4 @@ package-lock.json
 .tscache
 *.code-workspace
 secrets/
+test/
