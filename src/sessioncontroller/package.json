@@ -9,8 +9,8 @@
   "scripts": {
     "test": "grunt build_test",
     "prepare": "grunt build_lib",
-    "start": "node ./src/main.js -c http://consul:8500 -l development",
-    "debug": "nodemon --legacy-watch --watch ./src --inspect=0.0.0.0:5855 --nolazy ./src/main.js -c http://consul:8500 -l development"
+    "start": "node ./src/main.js -l development",
+    "debug": "nodemon --legacy-watch --watch ./src --inspect=0.0.0.0:5855 --nolazy ./src/main.js -c -l development"
   },
   "author": {
     "name": "Rajiv Ramdhany",
@@ -18,12 +18,10 @@
   },
   "license": "UNLICENSED",
   "dependencies": {
-    "async": "^2.5.0",
     "bluebird": "^3.5.1",
     "child-process-promise": "^2.2.1",
     "child_process": "^1.0.2",
     "command-line-args": "^4.0.6",
-    "consul": "^0.29.0",
     "docker-host-ip": "^1.0.1",
     "dvbcss-clocks": "^0.0.4",
     "dvbcss-protocols": "^0.0.2",
@@ -40,7 +38,7 @@
     "url": "^0.11.0",
     "uuid": "^3.2.1",
     "weak-map": "^1.0.5",
-    "winston": "^2.4.0",
+    "winston": "^2.4.7",
     "winston-daily-rotate-file": "^1.7.2"
   },
   "devDependencies": {
