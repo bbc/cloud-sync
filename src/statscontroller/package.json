@@ -7,8 +7,8 @@
     "example": "examples"
   },
   "scripts": {
-    "start": "node ./src/main.js -c http://consul:8500 -l development",
-    "debug": "nodemon --legacy-watch --watch ./src --inspect=0.0.0.0:5855 --nolazy ./src/main.js -c http://consul:8500 -l development"
+    "start": "node ./src/main.js -l development",
+    "debug": "nodemon --legacy-watch --watch ./src --inspect=0.0.0.0:5855 --nolazy ./src/main.js -l development"
   },
   "author": {
     "name": "Rajiv Ramdhany",
