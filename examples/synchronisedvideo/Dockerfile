@@ -1,4 +1,4 @@
-FROM node:carbon
+FROM node:12.22.12
 
 WORKDIR /usr/src/app
 
