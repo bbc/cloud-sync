@@ -62,8 +62,8 @@ myArray=($addresses)
 # echo "module.exports = { hostname: \"${myArray[0]}\", port:9001};" > $PWD/examples/synchronisedvideo/config/config.js
 # echo "writing config file $PWD/examples/synchronisedvideo/src/js/config.js"
 # echo "module.exports = { hostname: \"${myArray[0]}\", port:9001};" > $PWD/examples/synchronisedvideo/src/js/config.js
-echo "calling docker-compose up"
+echo "calling docker compose up"
 # grunt build_lib
-sudo docker-compose up -d --scale synccontroller=3
+sudo docker compose -f ./docker-compose-local.yml up -d --scale synccontroller=3
 
 

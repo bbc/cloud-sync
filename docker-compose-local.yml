@@ -1,95 +1,55 @@
-version: '2'
 services:
-  # Consul
-  consul:
-    image: gliderlabs/consul-server:latest
-    command: "-server -bootstrap"
-    ports:
-      - 80:8500
-    networks:
-      2immerse:
-        aliases:
-          - consul.service.consul
-
-
-  registrator:
-    image: gliderlabs/registrator:v7
-    command: "consul://consul:8500"
-    depends_on:
-      - consul
-    volumes:
-      - "/var/run/docker.sock:/tmp/docker.sock"
-    networks:
-      - 2immerse
 
   mqttbroker:
+    container_name: mqttbroker
     image: eclipse-mosquitto:1.6.15
     ports:
       - "1883:1883"
       - "9001:9001"
     volumes:
       - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
-    depends_on:
-      - registrator
     labels:
       - "SERVICE_NAME=mqttbroker"
     networks:
-      2immerse:
+      cloudsync-net:
         aliases:
-          - mqttbroker.service.consul
+          - mqttbroker.service
 
   redis:
-    image: redis:latest
+    container_name: redis
+    image: redis:6.2.4
     ports:
       - "6379:6379"
-    depends_on:
-      - registrator
     labels:
       - "SERVICE_NAME=redis"
     networks:
-      2immerse:
+      cloudsync-net:
         aliases:
-          - redis.service.consul
-
-  # telegraf:
-  #   image: telegraf
-  #   environment:
-  #     INFLUX_URL: "${INFLUX_URL}"
-  #     INFLUX_TOKEN: "${INFLUX_TOKEN}"
-  #     CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #     - ./telegraf/cloud-sync.conf:/etc/telegraf/telegraf.conf:ro
-  #   depends_on:
-  #     - redis
-  #   labels:
-  #     - "SERVICE_NAME=telegraf"
-  #   networks:
-  #     2immerse:
-  #       aliases:
-  #         - telegraf.service.consul
+          - redis.service
 
   wallclockservice:
-    build: ./wallclock-service
-    image: wallclockservice
+    container_name: wallclock-service
+    build: 
+      context: ./wallclock-service/
+      dockerfile: wallclock-service/Dockerfile
+    image: bbcrd-wallclockservice
     ports:
       - "6677:6677/udp"
       - "6676:6676"
       - "6675:80"
     labels:
       - "SERVICE_NAME=wallclock-service"
-    depends_on:
-      - registrator
     networks:
-      2immerse:
+      cloudsync-net:
         aliases:
-          - wallclock-service.service.consul
+          - wallclock-service.service
 
   sessioncontroller:
+    container_name: sessioncontroller
     build:
       context: ./src
       dockerfile: sessioncontroller/Dockerfile
-    image: sessioncontroller
+    image: bbcrd-cloudsync-sessioncontroller
     ports:
       - 4002:4002
     command: npm start
@@ -97,7 +57,6 @@ services:
       - ./src/sessioncontroller/src:/usr/src/sessioncontroller/src
       - ./src/sessioncontroller/log:/usr/src/sessioncontroller/log
     depends_on:
-      - registrator
       - mqttbroker
       - wallclockservice
     labels:
@@ -106,17 +65,16 @@ services:
       WALLCLOCK_SERVICE_WS_URL:  ${WALLCLOCK_SERVICE_WS_URL}
       ENABLE_INFLUX_DB_WRITE: ${STATS_WRITE_FLAG}
       CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
-
     networks:
-      2immerse:
+      cloudsync-net:
         aliases:
-          - sessioncontroller.service.consul
+          - sessioncontroller.service
 
   synccontroller:
     build:
       context: ./src
       dockerfile: synccontroller/Dockerfile
-    image: synccontroller
+    image: bbcrd-cloudsync-synccontroller
     ports:
       - 3002:3002
     command: npm start
@@ -124,7 +82,6 @@ services:
       - ./src/synccontroller/src:/usr/src/synccontroller/src
       - ./src/synccontroller/log:/usr/src/synccontroller/log
     depends_on:
-      - registrator
       - mqttbroker
       - redis
       - wallclockservice
@@ -134,17 +91,17 @@ services:
       WALLCLOCK_SERVICE_WS_URL: ${WALLCLOCK_SERVICE_WS_URL}
       ENABLE_INFLUX_DB_WRITE: ${STATS_WRITE_FLAG}
       CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
-
     networks:
-      2immerse:
+      cloudsync-net:
         aliases:
-          - synccontroller.service.consul
+          - synccontroller.service
 
   statscontroller:
+    container_name: statscontroller
     build:
       context: ./src
       dockerfile: statscontroller/Dockerfile
-    image: statscontroller
+    image: bbcrd-cloudsync-statscontroller
     ports:
       - 4001:4001
       - 5855:5855
@@ -153,7 +110,6 @@ services:
       - ./src/statscontroller/src:/usr/src/statscontroller/src
       - ./src/statscontroller/log:/usr/src/statscontroller/log
     depends_on:
-      - registrator
       - mqttbroker
       - redis
       - wallclockservice
@@ -168,51 +124,51 @@ services:
         INFLUX_TOKEN: "${INFLUX_TOKEN}"
 
     networks:
-      2immerse:
+      cloudsync-net:
         aliases:
-          - statscontroller.service.consul
+          - statscontroller.service
 
   timelineobserver:
+    container_name: timelineobserver
     build: src/timelineobserver/TimelineObserver/
-    image: timelineobserver
-    command: -r consul:8500 -d redis -b mqttbroker -t Sessions/+/timelines/+/state
+    image: bbcrd-cloudsync-timelineobserver 
+    command: -d redis -b mqttbroker -t Sessions/+/timelines/+/state
     depends_on:
-      - registrator
       - mqttbroker
       - redis
       - synccontroller
     labels:
       - "SERVICE_NAME=timelineobserver"
     environment:
-        CONSUL_URL: localhost:8500
         ENABLE_INFLUX_DB_WRITE: ${STATS_WRITE_FLAG}
         CLOUD_SYNC_INSTANCE_NAME: ${INSTANCE_NAME}
     networks:
-      2immerse:
+      cloudsync-net:
         aliases:
-          - timelineobserver.service.consul
+          - timelineobserver.service
 
   synchronisedvideo:
-      build: examples/synchronisedvideo
-      image: synchronisedvideo
-      volumes:
-        - ./examples/synchronisedvideo/src:/usr/src/app/src
-        - ./examples/synchronisedvideo/logs:/usr/src/app/logs
-        - ./examples/synchronisedvideo/media:/usr/src/app/media
-        - ./examples/synchronisedvideo/config:/usr/src/app/config
-        - ./dist:/usr/src/app/dist
-      ports:
-        - 3000:3000
-      depends_on:
-        - sessioncontroller
-      labels:
-        - "SERVICE_NAME=synchronisedvideo"
-      networks:
-        2immerse:
-          aliases:
-            - synchronisedvideo.service.consul
+    container_name: synchronisedvideo
+    build: examples/synchronisedvideo
+    image: bbcrd-cloudsync-syncvideo
+    volumes:
+      - ./examples/synchronisedvideo/src:/usr/src/app/src
+      - ./examples/synchronisedvideo/logs:/usr/src/app/logs
+      - ./examples/synchronisedvideo/media:/usr/src/app/media
+      - ./examples/synchronisedvideo/config:/usr/src/app/config
+      - ./dist:/usr/src/app/dist
+    ports:
+      - 3000:3000
+    depends_on:
+      - sessioncontroller
+    labels:
+      - "SERVICE_NAME=synchronisedvideo"
+    networks:
+      cloudsync-net:
+        aliases:
+          - synchronisedvideo.service
 
 networks:
-  2immerse:
+  cloudsync-net:
      driver: bridge
 
