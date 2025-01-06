@@ -2,6 +2,18 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
+			"type": "java",
+			"name": "TimelineObeserver",
+			"request": "launch",
+			"mainClass": "uk.co.bbc.rd.TimelineObserver.App",
+			"projectName": "TimelineObserver",
+			"args": [
+				"-b" , "mqttbroker",
+				"-d", "redis",
+				"-t", "Sessions/+/timelines/+/state"
+			]
+		},
+		{
 			"type": "node",
 			"request": "launch",
 			"name": "debug node client master mode",
