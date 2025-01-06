@@ -43,30 +43,35 @@ public class App
     	ArgumentParser parser = ArgumentParsers.newFor("TimelineObserverMain").build()
 				.description("Reads timeline observations from MQTT broker and publishes events into Redis");
 
-		parser.addArgument("-r", "--registry")
-		.dest("registry")
-		.type(String.class)
-		.required(true)
-		.help("Consul server endpoint address <IP address:port number>");
-
 		parser.addArgument("-b","--broker")
 		.dest("broker")
 		.type(String.class)
 		.required(true)
 		.help("MQTT broker service name");
+
+		parser.addArgument("-p", "--brokerPort")
+		.dest("brokerPort")
+		.type(Integer.class)
+		.setDefault(1883)
+		.help("Message Broker service port");
 		
-		parser.addArgument("-s","--servicesHost")
-		.dest("host")
-		.type(String.class)
-		.required(false)
-		.help("use addr for service hosts");
-
-
 		parser.addArgument("-d", "--db")
 		.dest("db")
 		.type(String.class)
 		.required(true)
 		.help("db: redis service name");
+
+		parser.addArgument("-q", "--dbPort")
+		.dest("dbPort")
+		.type(Integer.class)
+		.setDefault(6379)
+		.help("db: redis service port");
+
+		parser.addArgument("-s","--servicesHost")
+		.dest("host")
+		.type(String.class)
+		.required(false)
+		.help("use addr for service hosts");
 
 		parser.addArgument("-t", "--topics")
 		.dest("topics")
@@ -94,14 +99,19 @@ public class App
 		TimelineObserver observer;
 		
 		if (servicesHostAddr != null) {
-			observer = new TimelineObserver(ns.getString("registry"),  ns.getString("broker"), 1883, ns.getString("db"), ns.getList("topics") , servicesHostAddr);
+			observer = new TimelineObserver(ns.getString("broker"), 
+											ns.getInt("brokerPort").intValue(), 
+											ns.getString("db"), 
+											ns.getInt("dbPort").intValue(), 
+											ns.getList("topics") , servicesHostAddr);
 		}else
 		{
-			observer = new TimelineObserver(ns.getString("registry"),  ns.getString("broker"), 1883, ns.getString("db"), ns.getList("topics"));
+			observer = new TimelineObserver(ns.getString("broker"), 
+											ns.getInt("brokerPort").intValue(), 
+											ns.getString("db"), 
+											ns.getInt("dbPort").intValue(), 
+											ns.getList("topics"));
 		}
-		
-		 
-
 		observer.start();
     }
 }
