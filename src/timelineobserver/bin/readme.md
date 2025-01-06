@@ -19,4 +19,4 @@ Rajiv Ramdhany (BBC)  (rajiv.ramdhany@bbc.co.uk)
  java -jar ./TelemetryPump-jar-with-dependencies.jar -r 192.168.1.106:8500 -d redis -s mosquitto-1883 -t Sessions/+/timelines/+/state
  $ docker run -i -t --entrypoint /bin/bash nirish777/sessioncontroller
  docker run -it --network cloud-sync_2immerse --entrypoint /bin/ash timelineobserver
- java -jar TimelineObserver-jar-with-dependencies.jar -d redis -b mqttbroker -t Sessions/+/timelines/+/state
+ java -jar TimelineObserver-jar-with-dependencies.jar -r consul:8500 -d redis -b mqttbroker -t Sessions/+/timelines/+/state
